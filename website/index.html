@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title data-i18n="metaTitle">PastePaw - FuFu 的剪贴板小窝</title>
+    <meta
+      name="description"
+      content="PastePaw 是一款可爱的 macOS 剪贴板历史工具，帮你保存最近复制过的文字和图片。"
+      data-i18n-content="metaDescription"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="brand" href="#top" aria-label="PastePaw 首页" data-i18n-aria="brandAria">
+        <img src="./assets/fufu-idle.png" alt="" />
+        <span>PastePaw</span>
+      </a>
+      <nav aria-label="主要导航" data-i18n-aria="navAria">
+        <a href="#features" data-i18n="navFeatures">功能</a>
+        <a href="#install" data-i18n="navInstall">安装</a>
+        <a href="#more-apps" data-i18n="navMoreApps">更多应用</a>
+        <a href="#privacy" data-i18n="navPrivacy">隐私</a>
+      </nav>
+      <div class="header-actions">
+        <div class="language-switcher" aria-label="Language">
+          <button type="button" data-language-option="en">EN</button>
+          <button type="button" data-language-option="zh">中文</button>
+        </div>
+        <a class="nav-cta" href="#install" data-i18n="navCta">本地运行</a>
+      </div>
+    </header>
+
+    <main id="top">
+      <section class="hero">
+        <div class="hero-copy">
+          <p class="soft-label" data-i18n="softLabel">FuFu keeps your clipboard cozy</p>
+          <h1 data-i18n="heroTitle">可爱的 macOS 剪贴板历史工具</h1>
+          <p class="hero-text" data-i18n="heroText">
+            PastePaw 会在后台记录你最近复制的文字和图片。需要找回内容时，从菜单栏打开，搜索、置顶、删除，或一键复制回剪贴板。
+          </p>
+          <div class="hero-actions">
+            <a class="primary-button" href="#install" data-i18n="primaryCta">本地运行 PastePaw</a>
+            <a class="secondary-button" href="#install" data-i18n="secondaryCta">查看安装方式</a>
+          </div>
+        </div>
+
+        <div class="hero-art" aria-label="PastePaw app preview" data-i18n-aria="heroArtAria">
+          <div class="app-icon-card">
+            <img src="./assets/pastepaw-icon.png" alt="PastePaw App 图标" data-i18n-alt="appIconAlt" />
+          </div>
+          <div class="speech-card">
+            <img src="./assets/fufu-idle.png" alt="FuFu" />
+            <div>
+              <strong data-i18n="speechTitle">FuFu 已准备好</strong>
+              <span data-i18n="speechText">最近复制的内容会安静地待在这里。</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="features" class="section">
+        <div class="section-heading">
+          <h2 data-i18n="featuresTitle">把复制过的内容找回来</h2>
+          <p data-i18n="featuresText">轻量、直观、本地保存，适合每天反复复制文字和图片的工作流。</p>
+        </div>
+
+        <div class="feature-grid">
+          <article>
+            <span class="feature-icon">⌘</span>
+            <h3 data-i18n="featureOneTitle">文字和图片历史</h3>
+            <p data-i18n="featureOneText">自动记录最近复制的文字和原图质量图片，按时间倒序展示。</p>
+          </article>
+          <article>
+            <span class="feature-icon">★</span>
+            <h3 data-i18n="featureTwoTitle">置顶常用内容</h3>
+            <p data-i18n="featureTwoText">重要内容可以置顶保存，不会跟随普通历史一起过期。</p>
+          </article>
+          <article>
+            <span class="feature-icon">⌕</span>
+            <h3 data-i18n="featureThreeTitle">快速搜索</h3>
+            <p data-i18n="featureThreeText">在主窗口中搜索文字历史，快速定位刚刚复制过的片段。</p>
+          </article>
+          <article>
+            <span class="feature-icon">☰</span>
+            <h3 data-i18n="featureFourTitle">菜单栏快捷复制</h3>
+            <p data-i18n="featureFourText">直接从菜单栏选择最近历史，点击后复制回系统剪贴板。</p>
+          </article>
+        </div>
+      </section>
+
+      <section id="install" class="section install-section">
+        <div class="install-card">
+          <div>
+            <h2 data-i18n="installTitle">本地运行</h2>
+            <p data-i18n="installText">
+              当前项目已经包含 macOS 应用和静态网页。使用项目脚本可以构建并打开 PastePaw。
+            </p>
+          </div>
+          <code>./script/build_and_run.sh</code>
+        </div>
+      </section>
+
+      <section id="privacy" class="section privacy-section">
+        <div class="section-heading">
+          <h2 data-i18n="privacyTitle">只在你的 Mac 上保存</h2>
+          <p data-i18n="privacyText">
+            PastePaw 的历史记录保存在本机 Application Support，不同步、不上传。你可以设置保留天数，并随时清空非置顶记录。
+          </p>
+        </div>
+      </section>
+
+      <section id="more-apps" class="section more-apps-section">
+        <div class="more-apps-card">
+          <div class="section-heading">
+            <h2 data-i18n="moreAppsTitle">想看看更多 FuFu 应用？</h2>
+            <p data-i18n="moreAppsText">
+              FuFu 也在其他小工具里陪你工作和休息。看看 SlackerBuddy，让它在桌面上提醒你喝水、休息和放松。
+            </p>
+          </div>
+          <a
+            class="app-link-card"
+            href="https://slackerbuddy.vercel.app/"
+            target="_blank"
+            rel="noreferrer"
+            aria-label="Open SlackerBuddy"
+            data-i18n-aria="slackerBuddyAria"
+          >
+            <img src="./assets/slackerbuddy-app-icon.png" alt="SlackerBuddy icon" data-i18n-alt="slackerBuddyAlt" />
+            <span>
+              <strong>SlackerBuddy</strong>
+              <small data-i18n="slackerBuddyText">FuFu desktop pet for mindful breaks</small>
+            </span>
+          </a>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <img src="./assets/fufu-idle.png" alt="" />
+      <span>PastePaw · clipboard history with FuFu</span>
+    </footer>
+    <script src="./script.js"></script>
+  </body>
+</html>
