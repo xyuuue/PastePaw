@@ -4,3 +4,4 @@ dist/
 *.xcuserdata/
 DerivedData/
 Sources/PastePaw/Resources/AppIcon.iconset/
+.vercel

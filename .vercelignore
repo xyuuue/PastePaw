@@ -1,0 +1,15 @@
+.build/
+.git/
+.swiftpm/
+dist/
+DerivedData/
+Sources/
+Tests/
+Tools/
+script/
+Package.swift
+Package.resolved
+README.md
+LICENSE
+PastePaw Icon.png
+PastePaw ToolBar Icon.png
