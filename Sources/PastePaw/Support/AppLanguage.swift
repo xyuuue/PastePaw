@@ -34,6 +34,7 @@ enum LocalizedText {
         case pinnedPrefix
         case image
         case historySubtitle
+        case quickPanelHomeHint
         case searchPlaceholder
         case settingsHelp
         case noMatchingText
@@ -55,6 +56,16 @@ enum LocalizedText {
         case menuBar
         case menuBarHistoryItems
         case menuBarHistoryHint
+        case quickPanel
+        case quickPanelTitle
+        case quickPanelSubtitle
+        case quickPanelCollapsedHint
+        case quickPanelShortcut
+        case quickPanelHistoryItems
+        case quickPanelSettingsHint
+        case pressShortcut
+        case resetShortcut
+        case close
         case language
         case appLanguage
         case privacy
@@ -70,6 +81,7 @@ enum LocalizedText {
         .pinnedPrefix: "Pinned: ",
         .image: "Image",
         .historySubtitle: "FuFu keeps recent text and images ready for Cmd+V.",
+        .quickPanelHomeHint: "Press %@ to open the quick clipboard panel.",
         .searchPlaceholder: "Search text history",
         .settingsHelp: "Settings",
         .noMatchingText: "No matching text clippings",
@@ -91,6 +103,16 @@ enum LocalizedText {
         .menuBar: "Menu Bar",
         .menuBarHistoryItems: "Menu bar history items",
         .menuBarHistoryHint: "These items appear in the menu bar menu for one-click copy back to the clipboard.",
+        .quickPanel: "Quick Panel",
+        .quickPanelTitle: "FuFu Clipboard",
+        .quickPanelSubtitle: "Click an item to copy it back. Move the mouse away to close the panel.",
+        .quickPanelCollapsedHint: "Hover to open recent clips",
+        .quickPanelShortcut: "Shortcut",
+        .quickPanelHistoryItems: "Panel history items",
+        .quickPanelSettingsHint: "Press the shortcut to show the bottom panel. The default shortcut is Option + Space.",
+        .pressShortcut: "Press shortcut",
+        .resetShortcut: "Reset shortcut",
+        .close: "Close",
         .language: "Language",
         .appLanguage: "App language",
         .privacy: "Privacy",
@@ -106,6 +128,7 @@ enum LocalizedText {
         .pinnedPrefix: "置顶: ",
         .image: "图片",
         .historySubtitle: "FuFu 会帮你保存最近复制的文字和图片，随时可用 Cmd+V。",
+        .quickPanelHomeHint: "按 %@ 开启快捷剪贴浮窗。",
         .searchPlaceholder: "搜索文字历史",
         .settingsHelp: "设置",
         .noMatchingText: "没有匹配的文字记录",
@@ -127,6 +150,16 @@ enum LocalizedText {
         .menuBar: "菜单栏",
         .menuBarHistoryItems: "菜单栏历史数量",
         .menuBarHistoryHint: "这些记录会显示在菜单栏菜单中，点击即可复制回剪贴板。",
+        .quickPanel: "快捷浮窗",
+        .quickPanelTitle: "FuFu 剪贴板",
+        .quickPanelSubtitle: "点击记录即可复制回剪贴板，鼠标移开后会自动关闭。",
+        .quickPanelCollapsedHint: "悬停打开近期记录",
+        .quickPanelShortcut: "快捷键",
+        .quickPanelHistoryItems: "浮窗历史数量",
+        .quickPanelSettingsHint: "按下快捷键即可打开底部浮窗，默认快捷键是 Option + Space。",
+        .pressShortcut: "按下快捷键",
+        .resetShortcut: "重置快捷键",
+        .close: "关闭",
         .language: "语言",
         .appLanguage: "应用语言",
         .privacy: "隐私",

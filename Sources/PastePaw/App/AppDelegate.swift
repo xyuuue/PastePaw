@@ -1,4 +1,5 @@
 import AppKit
+import Combine
 import PastePawCore
 import SwiftUI
 
@@ -6,6 +7,9 @@ import SwiftUI
 final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private var statusItem: NSStatusItem?
     private var historyWindow: NSWindow?
+    private var quickPanelController: QuickPanelController?
+    private var hotKeyManager: GlobalHotKeyManager?
+    private var cancellables = Set<AnyCancellable>()
     private let store = ClipboardHistoryStore.shared
 
     func applicationDidFinishLaunching(_ notification: Notification) {
@@ -16,6 +20,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         }
 
         installStatusItem()
+        installQuickPanel()
     }
 
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
@@ -38,6 +43,26 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         item.menu = menu
     }
 
+    private func installQuickPanel() {
+        let panelController = QuickPanelController(store: store)
+        quickPanelController = panelController
+
+        let hotKeyManager = GlobalHotKeyManager { [weak self] in
+            Task { @MainActor in
+                self?.quickPanelController?.togglePanel()
+            }
+        }
+        self.hotKeyManager = hotKeyManager
+        hotKeyManager.register(store.quickPanelShortcut)
+
+        store.$quickPanelShortcut
+            .removeDuplicates()
+            .sink { shortcut in
+                hotKeyManager.register(shortcut)
+            }
+            .store(in: &cancellables)
+    }
+
     func menuNeedsUpdate(_ menu: NSMenu) {
         menu.removeAllItems()
 
@@ -50,13 +75,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             emptyItem.isEnabled = false
             menu.addItem(emptyItem)
         } else {
-            for item in recentItems {
-                let menuItem = NSMenuItem(title: menuTitle(for: item), action: #selector(copyHistoryItem(_:)), keyEquivalent: "")
-                menuItem.target = self
-                menuItem.representedObject = item.id.uuidString
-                menuItem.image = menuIcon(for: item)
-                menu.addItem(menuItem)
-            }
+            menu.addItem(scrollableHistoryItem(items: recentItems))
         }
 
         menu.addItem(NSMenuItem.separator())
@@ -134,52 +153,27 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
     }
 
-    @objc private func copyHistoryItem(_ sender: NSMenuItem) {
-        guard let idString = sender.representedObject as? String,
-              let id = UUID(uuidString: idString),
-              let item = store.items.first(where: { $0.id == id }) else {
-            return
-        }
-
-        store.copyToPasteboard(item)
-    }
-
     @objc private func quit() {
         NSApp.terminate(nil)
-    }
-
-    private func menuTitle(for item: ClipboardHistoryItem) -> String {
-        let pinPrefix = item.isPinned ? store.localized(.pinnedPrefix) : ""
-
-        switch item.content {
-        case .text(let text):
-            let oneLine = text
-                .replacingOccurrences(of: "\n", with: " ")
-                .trimmingCharacters(in: .whitespacesAndNewlines)
-            return pinPrefix + String(oneLine.prefix(42))
-        case .image(let payload):
-            if let width = payload.width, let height = payload.height {
-                return pinPrefix + "\(store.localized(.image)) \(Int(width))x\(Int(height))"
-            }
-            return pinPrefix + store.localized(.image)
-        }
-    }
-
-    private func menuIcon(for item: ClipboardHistoryItem) -> NSImage? {
-        let name: String
-        switch item.content {
-        case .text:
-            name = item.isPinned ? "pin.fill" : "text.alignleft"
-        case .image:
-            name = item.isPinned ? "pin.fill" : "photo"
-        }
-
-        return NSImage(systemSymbolName: name, accessibilityDescription: nil)
     }
 
     private func actionItem(title: String, action: Selector, keyEquivalent: String = "") -> NSMenuItem {
         let item = NSMenuItem(title: title, action: action, keyEquivalent: keyEquivalent)
         item.target = self
         return item
+    }
+
+    private func scrollableHistoryItem(items: [ClipboardHistoryItem]) -> NSMenuItem {
+        let menuItem = NSMenuItem()
+        let hostingView = NSHostingView(
+            rootView: MenuBarHistoryListView(items: items) { [weak self] item in
+                self?.store.copyToPasteboard(item)
+                self?.statusItem?.menu?.cancelTracking()
+            }
+            .environmentObject(store)
+        )
+        hostingView.frame = NSRect(x: 0, y: 0, width: 292, height: min(max(CGFloat(items.count) * 58 + 42, 116), 336))
+        menuItem.view = hostingView
+        return menuItem
     }
 }

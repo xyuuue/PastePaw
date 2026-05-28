@@ -25,6 +25,22 @@ final class ClipboardHistoryStore: ObservableObject {
             UserDefaults.standard.set(menuHistoryCount, forKey: Self.menuHistoryCountKey)
         }
     }
+    @Published var quickPanelHistoryCount: Int {
+        didSet {
+            let boundedCount = min(max(quickPanelHistoryCount, Self.quickPanelHistoryRange.lowerBound), Self.quickPanelHistoryRange.upperBound)
+            if boundedCount != quickPanelHistoryCount {
+                quickPanelHistoryCount = boundedCount
+                return
+            }
+
+            UserDefaults.standard.set(quickPanelHistoryCount, forKey: Self.quickPanelHistoryCountKey)
+        }
+    }
+    @Published var quickPanelShortcut: PastePawKeyboardShortcut {
+        didSet {
+            UserDefaults.standard.set(encodedShortcut(quickPanelShortcut), forKey: Self.quickPanelShortcutKey)
+        }
+    }
     @Published var appLanguage: AppLanguage {
         didSet {
             UserDefaults.standard.set(appLanguage.rawValue, forKey: Self.appLanguageKey)
@@ -34,8 +50,11 @@ final class ClipboardHistoryStore: ObservableObject {
 
     static let retentionOptions = [1, 3, 5]
     static let menuHistoryRange = 1...15
+    static let quickPanelHistoryRange = 3...12
     private static let retentionDaysKey = "retentionDays"
     private static let menuHistoryCountKey = "menuHistoryCount"
+    private static let quickPanelHistoryCountKey = "quickPanelHistoryCount"
+    private static let quickPanelShortcutKey = "quickPanelShortcut"
     private static let appLanguageKey = "appLanguage"
 
     private let fileManager: FileManager
@@ -56,6 +75,9 @@ final class ClipboardHistoryStore: ObservableObject {
         self.retentionDays = Self.retentionOptions.contains(savedRetentionDays) ? savedRetentionDays : 3
         let savedMenuHistoryCount = UserDefaults.standard.integer(forKey: Self.menuHistoryCountKey)
         self.menuHistoryCount = Self.menuHistoryRange.contains(savedMenuHistoryCount) ? savedMenuHistoryCount : 5
+        let savedQuickPanelHistoryCount = UserDefaults.standard.integer(forKey: Self.quickPanelHistoryCountKey)
+        self.quickPanelHistoryCount = Self.quickPanelHistoryRange.contains(savedQuickPanelHistoryCount) ? savedQuickPanelHistoryCount : 7
+        self.quickPanelShortcut = Self.decodedShortcut() ?? .defaultQuickPanel
         let savedLanguage = UserDefaults.standard.string(forKey: Self.appLanguageKey)
             .flatMap(AppLanguage.init(rawValue:))
         self.appLanguage = savedLanguage ?? .english
@@ -77,6 +99,14 @@ final class ClipboardHistoryStore: ObservableObject {
 
     var recentMenuItems: [ClipboardHistoryItem] {
         Array(HistoryRules.orderedItems(items).prefix(menuHistoryCount))
+    }
+
+    var recentQuickPanelItems: [ClipboardHistoryItem] {
+        Array(HistoryRules.orderedItems(items).prefix(quickPanelHistoryCount))
+    }
+
+    func resetQuickPanelShortcut() {
+        quickPanelShortcut = .defaultQuickPanel
     }
 
     func startMonitoring() {
@@ -192,5 +222,17 @@ final class ClipboardHistoryStore: ObservableObject {
                 try? fileManager.removeItem(at: imagesDirectory.appendingPathComponent(payload.fileName))
             }
         }
+    }
+
+    private static func decodedShortcut() -> PastePawKeyboardShortcut? {
+        guard let data = UserDefaults.standard.data(forKey: quickPanelShortcutKey) else {
+            return nil
+        }
+
+        return try? JSONDecoder().decode(PastePawKeyboardShortcut.self, from: data)
+    }
+
+    private func encodedShortcut(_ shortcut: PastePawKeyboardShortcut) -> Data? {
+        try? JSONEncoder().encode(shortcut)
     }
 }

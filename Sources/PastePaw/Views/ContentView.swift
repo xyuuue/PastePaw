@@ -55,6 +55,24 @@ private struct HeaderView: View {
                 Text(store.localized(.historySubtitle))
                     .font(.callout)
                     .foregroundStyle(PastePawTheme.coffee.opacity(0.75))
+
+                HStack(spacing: 6) {
+                    Image(systemName: "keyboard")
+                        .font(.system(size: 12, weight: .semibold))
+
+                    Text(String(format: store.localized(.quickPanelHomeHint), store.quickPanelShortcut.displayText))
+                        .font(.system(size: 12, weight: .semibold, design: .rounded))
+                        .lineLimit(1)
+                }
+                .foregroundStyle(PastePawTheme.cocoa.opacity(0.82))
+                .padding(.horizontal, 10)
+                .padding(.vertical, 5)
+                .background(.white.opacity(0.58), in: Capsule())
+                .overlay(
+                    Capsule()
+                        .stroke(PastePawTheme.warmCream, lineWidth: 1)
+                )
+                .padding(.top, 4)
             }
 
             Spacer()

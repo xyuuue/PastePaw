@@ -38,6 +38,29 @@ struct SettingsView: View {
             }
 
             Section {
+                HStack {
+                    Text(store.localized(.quickPanelShortcut))
+                    Spacer()
+                    ShortcutRecorderView(shortcut: $store.quickPanelShortcut)
+                }
+
+                Stepper(value: $store.quickPanelHistoryCount, in: ClipboardHistoryStore.quickPanelHistoryRange) {
+                    HStack {
+                        Text(store.localized(.quickPanelHistoryItems))
+                        Spacer()
+                        Text("\(store.quickPanelHistoryCount)")
+                            .foregroundStyle(.secondary)
+                    }
+                }
+
+                Text(store.localized(.quickPanelSettingsHint))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            } header: {
+                Label(store.localized(.quickPanel), systemImage: "rectangle.bottomthird.inset.filled")
+            }
+
+            Section {
                 Picker(store.localized(.appLanguage), selection: $store.appLanguage) {
                     ForEach(AppLanguage.allCases) { language in
                         Text(language.displayName).tag(language)
