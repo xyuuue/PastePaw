@@ -1,25 +1,46 @@
 # PastePaw
 
-PastePaw is a cute macOS clipboard history app with a FuFu theme. It records recent copied text and images locally, lets you search, pin, delete, and copy history items back to the system clipboard, and includes a menu bar quick-copy workflow.
+![PastePaw app icon](website/assets/pastepaw-icon.png)
+
+PastePaw is a cute macOS clipboard history app with a FuFu theme. It keeps recent text and images available from the menu bar, so you can search, pin, delete, and copy items back to the system clipboard without leaving your current workflow.
 
 ## Features
 
-- macOS menu bar app that runs in the background.
-- Clipboard history for text and original-quality images.
-- Pinned items that do not expire.
-- Configurable retention for normal history.
-- Searchable text history.
-- Configurable menu bar quick-history count.
-- Chinese and English language support.
-- Static marketing website in `website/`.
+- Runs quietly as a macOS menu bar app.
+- Saves recent copied text and original-quality images locally.
+- Lets you pin important items so they do not expire.
+- Supports configurable retention for normal clipboard history.
+- Provides quick text search in the main history window.
+- Shows recent history in the menu bar for one-click copy back.
+- Includes English and Chinese language options.
+- Ships with a static product website in `website/`.
 
-## Run the macOS App
+## Privacy
+
+PastePaw stores clipboard history locally in Application Support on your Mac. It does not sync, upload, or share your clipboard content.
+
+## Run Locally
+
+Requirements:
+
+- macOS 14 or later
+- Swift 6 toolchain
+
+Build and open the macOS app:
 
 ```bash
 ./script/build_and_run.sh
 ```
 
-## Preview the Website
+Run tests:
+
+```bash
+swift test
+```
+
+## Website
+
+Preview the static website locally:
 
 ```bash
 python3 -m http.server 4173 --directory website
@@ -30,3 +51,7 @@ Then open `http://127.0.0.1:4173`.
 Production website:
 
 https://pastepaw.vercel.app
+
+## License
+
+PastePaw is proprietary software. See [LICENSE](LICENSE) for usage terms.
