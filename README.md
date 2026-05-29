@@ -30,6 +30,7 @@ Download flow:
 1. Download `PastePaw.dmg`.
 2. Open the DMG and drag `PastePaw.app` into Applications.
 3. On first launch, if macOS warns that the developer cannot be verified, Control-click `PastePaw.app` and choose Open once.
+4. After PastePaw opens from Applications, choose whether to move `PastePaw.dmg` to Trash or keep it.
 
 ## Run Locally
 

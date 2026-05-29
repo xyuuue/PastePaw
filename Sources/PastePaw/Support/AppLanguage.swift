@@ -64,6 +64,12 @@ enum LocalizedText {
         case quickPanelHistoryItems
         case quickPanelHistoryMaxWarning
         case quickPanelSettingsHint
+        case installCleanupTitle
+        case installCleanupMessage
+        case installCleanupMoveToTrash
+        case installCleanupKeep
+        case installCleanupFailureTitle
+        case installCleanupFailureMessage
         case pressShortcut
         case resetShortcut
         case close
@@ -112,6 +118,12 @@ enum LocalizedText {
         .quickPanelHistoryItems: "Panel history items",
         .quickPanelHistoryMaxWarning: "Maximum is 50 items.",
         .quickPanelSettingsHint: "Press the shortcut to show the bottom panel. The default shortcut is Option + Space.",
+        .installCleanupTitle: "Move PastePaw.dmg to Trash?",
+        .installCleanupMessage: "PastePaw is installed in Applications. You can move the installer disk image to Trash or keep it.",
+        .installCleanupMoveToTrash: "Move to Trash",
+        .installCleanupKeep: "Keep",
+        .installCleanupFailureTitle: "Could not move the DMG to Trash",
+        .installCleanupFailureMessage: "You can eject the PastePaw disk image and delete PastePaw.dmg manually. Error: %@",
         .pressShortcut: "Press shortcut",
         .resetShortcut: "Reset shortcut",
         .close: "Close",
@@ -160,6 +172,12 @@ enum LocalizedText {
         .quickPanelHistoryItems: "浮窗历史数量",
         .quickPanelHistoryMaxWarning: "最多 50 个。",
         .quickPanelSettingsHint: "按下快捷键即可打开底部浮窗，默认快捷键是 Option + Space。",
+        .installCleanupTitle: "把 PastePaw.dmg 移到废纸篓？",
+        .installCleanupMessage: "PastePaw 已安装到 Applications。你可以把安装用的 DMG 移到废纸篓，也可以保留它。",
+        .installCleanupMoveToTrash: "移到废纸篓",
+        .installCleanupKeep: "保留",
+        .installCleanupFailureTitle: "无法把 DMG 移到废纸篓",
+        .installCleanupFailureMessage: "你可以手动推出 PastePaw 磁盘映像并删除 PastePaw.dmg。错误：%@",
         .pressShortcut: "按下快捷键",
         .resetShortcut: "重置快捷键",
         .close: "关闭",

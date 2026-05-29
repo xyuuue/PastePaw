@@ -21,6 +21,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
         installStatusItem()
         installQuickPanel()
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) { [store] in
+            InstallDiskImageCleanupPrompt.presentIfNeeded(store: store)
+        }
     }
 
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
