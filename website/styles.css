@@ -274,7 +274,7 @@ h2 {
 }
 
 .section-heading p,
-.install-card p {
+.download-copy p {
   color: var(--coffee-soft);
   font-size: 19px;
   line-height: 1.65;
@@ -288,7 +288,7 @@ h2 {
 }
 
 .feature-grid article,
-.install-card {
+.download-panel {
   border: 1px solid var(--line);
   border-radius: 28px;
   background: rgba(255, 250, 240, 0.74);
@@ -324,16 +324,65 @@ h3 {
   font-weight: 620;
 }
 
-.install-card {
-  display: flex;
+.download-panel {
+  display: grid;
+  grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
   align-items: center;
-  justify-content: space-between;
-  gap: 28px;
-  padding: 30px;
+  gap: 34px;
+  padding: 34px;
 }
 
-.install-card p {
+.download-copy p {
   margin-bottom: 0;
+}
+
+.download-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 26px;
+}
+
+.download-steps {
+  display: grid;
+  gap: 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.download-steps li {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr);
+  gap: 16px;
+  padding: 18px;
+  border: 1px solid rgba(59, 33, 22, 0.1);
+  border-radius: 22px;
+  background: rgba(255, 253, 247, 0.78);
+}
+
+.download-steps span {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border-radius: 16px;
+  color: #fff7ea;
+  background: #1f1c22;
+  font-weight: 950;
+}
+
+.download-steps strong {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 18px;
+}
+
+.download-steps p {
+  margin: 0;
+  color: var(--coffee-soft);
+  line-height: 1.5;
+  font-weight: 650;
 }
 
 code {
@@ -447,9 +496,8 @@ footer img {
     grid-template-columns: 1fr 1fr;
   }
 
-  .install-card {
-    align-items: stretch;
-    flex-direction: column;
+  .download-panel {
+    grid-template-columns: 1fr;
   }
 
   .more-apps-card {

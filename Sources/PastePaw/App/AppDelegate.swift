@@ -87,6 +87,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private func toolbarIcon() -> NSImage {
         let candidates = [
             Bundle.main.url(forResource: "PastePawToolBarIcon", withExtension: "png"),
+            Bundle.main.resourceURL?
+                .appendingPathComponent("PastePaw_PastePaw.bundle")
+                .appendingPathComponent("PastePawToolBarIcon.png"),
             Bundle.main.bundleURL
                 .appendingPathComponent("PastePaw_PastePaw.bundle")
                 .appendingPathComponent("PastePawToolBarIcon.png")
@@ -106,6 +109,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private func appIcon() -> NSImage? {
         let candidates = [
             Bundle.main.url(forResource: "AppIcon", withExtension: "icns"),
+            Bundle.main.resourceURL?
+                .appendingPathComponent("PastePaw_PastePaw.bundle")
+                .appendingPathComponent("AppIcon.icns"),
             Bundle.main.bundleURL
                 .appendingPathComponent("PastePaw_PastePaw.bundle")
                 .appendingPathComponent("AppIcon.icns")

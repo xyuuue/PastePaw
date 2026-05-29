@@ -21,7 +21,7 @@
       </a>
       <nav aria-label="Primary navigation" data-i18n-aria="navAria">
         <a href="#features" data-i18n="navFeatures">Features</a>
-        <a href="#install" data-i18n="navInstall">Install</a>
+        <a href="#download" data-i18n="navDownload">Download</a>
         <a href="#more-apps" data-i18n="navMoreApps">More apps</a>
         <a href="#privacy" data-i18n="navPrivacy">Privacy</a>
       </nav>
@@ -30,7 +30,7 @@
           <button type="button" data-language-option="en" aria-pressed="true">EN</button>
           <button type="button" data-language-option="zh" aria-pressed="false">中文</button>
         </div>
-        <a class="nav-cta" href="#install" data-i18n="navCta">Run locally</a>
+        <a class="nav-cta" href="./downloads/PastePaw.dmg" download data-i18n="navCta">Download DMG</a>
       </div>
     </header>
 
@@ -43,8 +43,8 @@
             PastePaw quietly records recently copied text and images in the background. Use the main window, scrollable menu bar history, or the Option+Space bottom quick panel to bring clippings back fast.
           </p>
           <div class="hero-actions">
-            <a class="primary-button" href="#install" data-i18n="primaryCta">Run PastePaw locally</a>
-            <a class="secondary-button" href="#install" data-i18n="secondaryCta">View install steps</a>
+            <a class="primary-button" href="./downloads/PastePaw.dmg" download data-i18n="primaryCta">Download PastePaw</a>
+            <a class="secondary-button" href="#download" data-i18n="secondaryCta">View download flow</a>
           </div>
         </div>
 
@@ -102,15 +102,42 @@
         </div>
       </section>
 
-      <section id="install" class="section install-section">
-        <div class="install-card">
-          <div>
-            <h2 data-i18n="installTitle">Run locally</h2>
-            <p data-i18n="installText">
-              This project includes the macOS app and the static website. Use the project script to build and open PastePaw.
+      <section id="download" class="section download-section">
+        <div class="download-panel">
+          <div class="download-copy">
+            <p class="soft-label" data-i18n="downloadFlowLabel">下载流程</p>
+            <h2 data-i18n="downloadTitle">Download PastePaw DMG</h2>
+            <p data-i18n="downloadText">
+              Download the universal macOS 14+ DMG, open it, and drag PastePaw into Applications.
             </p>
+            <div class="download-actions">
+              <a class="primary-button" href="./downloads/PastePaw.dmg" download data-i18n="downloadButton">Download DMG</a>
+              <a class="secondary-button" href="./downloads/PastePaw.dmg.sha256" download data-i18n="downloadChecksum">SHA-256</a>
+            </div>
           </div>
-          <code>./script/build_and_run.sh</code>
+          <ol class="download-steps" aria-label="Download flow" data-i18n-aria="downloadStepsAria">
+            <li>
+              <span>1</span>
+              <div>
+                <strong data-i18n="downloadStepOneTitle">Download</strong>
+                <p data-i18n="downloadStepOneText">Save PastePaw.dmg from this page.</p>
+              </div>
+            </li>
+            <li>
+              <span>2</span>
+              <div>
+                <strong data-i18n="downloadStepTwoTitle">Install</strong>
+                <p data-i18n="downloadStepTwoText">Open the DMG and drag PastePaw into Applications.</p>
+              </div>
+            </li>
+            <li>
+              <span>3</span>
+              <div>
+                <strong data-i18n="downloadStepThreeTitle">Open the first time</strong>
+                <p data-i18n="downloadStepThreeText">If macOS warns about the developer, Control-click PastePaw and choose Open once.</p>
+              </div>
+            </li>
+          </ol>
         </div>
       </section>
 

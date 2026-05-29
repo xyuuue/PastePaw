@@ -24,10 +24,21 @@ struct CatMascotView: View {
     }
 
     private var fufuImage: NSImage? {
-        guard let url = Bundle.module.url(forResource: "fufu-idle", withExtension: "png") else {
-            return nil
+        let candidates = [
+            Bundle.main.resourceURL?
+                .appendingPathComponent("PastePaw_PastePaw.bundle")
+                .appendingPathComponent("fufu-idle.png"),
+            Bundle.main.bundleURL
+                .appendingPathComponent("PastePaw_PastePaw.bundle")
+                .appendingPathComponent("fufu-idle.png")
+        ].compactMap { $0 }
+
+        for url in candidates {
+            if let image = NSImage(contentsOf: url) {
+                return image
+            }
         }
 
-        return NSImage(contentsOf: url)
+        return nil
     }
 }

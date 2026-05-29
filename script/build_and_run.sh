@@ -37,7 +37,7 @@ fi
 
 RESOURCE_BUNDLE="$(dirname "$BUILD_BINARY")/PastePaw_PastePaw.bundle"
 if [ -d "$RESOURCE_BUNDLE" ]; then
-  cp -R "$RESOURCE_BUNDLE" "$APP_BUNDLE/PastePaw_PastePaw.bundle"
+  cp -R "$RESOURCE_BUNDLE" "$APP_RESOURCES/PastePaw_PastePaw.bundle"
 fi
 
 cat >"$INFO_PLIST" <<PLIST

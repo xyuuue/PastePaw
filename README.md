@@ -19,6 +19,18 @@ PastePaw is a cute macOS clipboard history app with a FuFu theme. It keeps recen
 
 PastePaw stores clipboard history locally in Application Support on your Mac. It does not sync, upload, or share your clipboard content.
 
+## Download
+
+Download the latest DMG from the product website:
+
+https://pastepaw.vercel.app/downloads/PastePaw.dmg
+
+Download flow:
+
+1. Download `PastePaw.dmg`.
+2. Open the DMG and drag `PastePaw.app` into Applications.
+3. On first launch, if macOS warns that the developer cannot be verified, Control-click `PastePaw.app` and choose Open once.
+
 ## Run Locally
 
 Requirements:
@@ -36,6 +48,12 @@ Run tests:
 
 ```bash
 swift test
+```
+
+Package the downloadable DMG:
+
+```bash
+./script/package_dmg.sh
 ```
 
 ## Website
