@@ -31,7 +31,7 @@ const dictionary = {
     featureFiveTitle: "底部快捷浮窗",
     featureFiveText: "默认按 Option+Space 打开和屏幕一样长的底部历史浮窗。",
     featureSixTitle: "自定义快捷键",
-    featureSixText: "在设置里修改快捷键和浮窗历史数量，贴合自己的复制工作流。",
+    featureSixText: "在设置里修改快捷键，并自定义浮窗历史数量，最多 50 个。",
     installTitle: "本地运行",
     installText: "当前项目已经包含 macOS 应用和静态网页。使用项目脚本可以构建并打开 PastePaw。",
     privacyTitle: "只在你的 Mac 上保存",
@@ -74,7 +74,7 @@ const dictionary = {
     featureFiveTitle: "Bottom quick panel",
     featureFiveText: "Press Option+Space by default to open a full-width bottom panel for recent history.",
     featureSixTitle: "Custom shortcuts",
-    featureSixText: "Change the shortcut and panel history count in settings to match your clipboard workflow.",
+    featureSixText: "Change the shortcut and customize the panel history count up to 50 items in settings.",
     installTitle: "Run locally",
     installText: "This project includes the macOS app and the static website. Use the project script to build and open PastePaw.",
     privacyTitle: "Stored only on your Mac",
@@ -89,11 +89,13 @@ const dictionary = {
 
 const languageButtons = document.querySelectorAll("[data-language-option]");
 const savedLanguage = localStorage.getItem("pastepaw-language");
-const initialLanguage = savedLanguage || (navigator.language.startsWith("zh") ? "zh" : "en");
+const hasSavedLanguagePreference = localStorage.getItem("pastepaw-language-preference") === "true";
+const initialLanguage = hasSavedLanguagePreference && dictionary[savedLanguage] ? savedLanguage : "en";
 
-function applyLanguage(language) {
-  const messages = dictionary[language];
-  document.documentElement.lang = language === "zh" ? "zh-CN" : "en";
+function applyLanguage(language, options = {}) {
+  const activeLanguage = dictionary[language] ? language : "en";
+  const messages = dictionary[activeLanguage];
+  document.documentElement.lang = activeLanguage === "zh" ? "zh-CN" : "en";
   document.title = messages.metaTitle;
 
   document.querySelectorAll("[data-i18n]").forEach((node) => {
@@ -113,16 +115,19 @@ function applyLanguage(language) {
   });
 
   languageButtons.forEach((button) => {
-    const isActive = button.dataset.languageOption === language;
+    const isActive = button.dataset.languageOption === activeLanguage;
     button.setAttribute("aria-pressed", String(isActive));
   });
 
-  localStorage.setItem("pastepaw-language", language);
+  if (options.remember) {
+    localStorage.setItem("pastepaw-language", activeLanguage);
+    localStorage.setItem("pastepaw-language-preference", "true");
+  }
 }
 
 languageButtons.forEach((button) => {
   button.addEventListener("click", () => {
-    applyLanguage(button.dataset.languageOption);
+    applyLanguage(button.dataset.languageOption, { remember: true });
   });
 });
 

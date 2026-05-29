@@ -2,6 +2,7 @@ import SwiftUI
 
 struct SettingsView: View {
     @EnvironmentObject private var store: ClipboardHistoryStore
+    @State private var showsQuickPanelHistoryLimitWarning = false
 
     var body: some View {
         Form {
@@ -44,13 +45,25 @@ struct SettingsView: View {
                     ShortcutRecorderView(shortcut: $store.quickPanelShortcut)
                 }
 
-                Stepper(value: $store.quickPanelHistoryCount, in: ClipboardHistoryStore.quickPanelHistoryRange) {
-                    HStack {
-                        Text(store.localized(.quickPanelHistoryItems))
-                        Spacer()
-                        Text("\(store.quickPanelHistoryCount)")
-                            .foregroundStyle(.secondary)
-                    }
+                HStack {
+                    Text(store.localized(.quickPanelHistoryItems))
+                    Spacer()
+                    TextField(store.localized(.quickPanelHistoryItems), value: quickPanelHistoryCountBinding, format: .number)
+                        .textFieldStyle(.roundedBorder)
+                        .multilineTextAlignment(.trailing)
+                        .frame(width: 72)
+                    Stepper(
+                        store.localized(.quickPanelHistoryItems),
+                        value: quickPanelHistoryCountBinding,
+                        in: ClipboardHistoryStore.quickPanelHistoryRange
+                    )
+                    .labelsHidden()
+                }
+
+                if showsQuickPanelHistoryLimitWarning {
+                    Label(store.localized(.quickPanelHistoryMaxWarning), systemImage: "exclamationmark.triangle.fill")
+                        .font(.caption)
+                        .foregroundStyle(.orange)
                 }
 
                 Text(store.localized(.quickPanelSettingsHint))
@@ -87,5 +100,17 @@ struct SettingsView: View {
         }
         .formStyle(.grouped)
         .padding()
+    }
+
+    private var quickPanelHistoryCountBinding: Binding<Int> {
+        Binding(
+            get: {
+                store.quickPanelHistoryCount
+            },
+            set: { newCount in
+                showsQuickPanelHistoryLimitWarning = newCount > ClipboardHistoryStore.quickPanelHistoryRange.upperBound
+                store.quickPanelHistoryCount = newCount
+            }
+        )
     }
 }

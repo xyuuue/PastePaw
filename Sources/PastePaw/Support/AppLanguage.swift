@@ -62,6 +62,7 @@ enum LocalizedText {
         case quickPanelCollapsedHint
         case quickPanelShortcut
         case quickPanelHistoryItems
+        case quickPanelHistoryMaxWarning
         case quickPanelSettingsHint
         case pressShortcut
         case resetShortcut
@@ -109,6 +110,7 @@ enum LocalizedText {
         .quickPanelCollapsedHint: "Hover to open recent clips",
         .quickPanelShortcut: "Shortcut",
         .quickPanelHistoryItems: "Panel history items",
+        .quickPanelHistoryMaxWarning: "Maximum is 50 items.",
         .quickPanelSettingsHint: "Press the shortcut to show the bottom panel. The default shortcut is Option + Space.",
         .pressShortcut: "Press shortcut",
         .resetShortcut: "Reset shortcut",
@@ -156,6 +158,7 @@ enum LocalizedText {
         .quickPanelCollapsedHint: "悬停打开近期记录",
         .quickPanelShortcut: "快捷键",
         .quickPanelHistoryItems: "浮窗历史数量",
+        .quickPanelHistoryMaxWarning: "最多 50 个。",
         .quickPanelSettingsHint: "按下快捷键即可打开底部浮窗，默认快捷键是 Option + Space。",
         .pressShortcut: "按下快捷键",
         .resetShortcut: "重置快捷键",

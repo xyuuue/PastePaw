@@ -50,7 +50,7 @@ final class ClipboardHistoryStore: ObservableObject {
 
     static let retentionOptions = [1, 3, 5]
     static let menuHistoryRange = 1...15
-    static let quickPanelHistoryRange = 3...12
+    static let quickPanelHistoryRange = 3...50
     private static let retentionDaysKey = "retentionDays"
     private static let menuHistoryCountKey = "menuHistoryCount"
     private static let quickPanelHistoryCountKey = "quickPanelHistoryCount"

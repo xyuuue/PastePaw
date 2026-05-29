@@ -1,12 +1,12 @@
 <!doctype html>
-<html lang="zh-CN">
+<html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title data-i18n="metaTitle">PastePaw - FuFu 的剪贴板小窝</title>
+    <title data-i18n="metaTitle">PastePaw - FuFu's Clipboard Home</title>
     <meta
       name="description"
-      content="PastePaw 是一款可爱的 macOS 剪贴板历史工具，支持文字图片历史、菜单栏快捷复制和 Option+Space 底部快捷浮窗。"
+      content="PastePaw is a cute macOS clipboard history app with text and image history, menu bar quick copy, and an Option+Space bottom quick panel."
       data-i18n-content="metaDescription"
     />
     <link rel="icon" type="image/png" href="/assets/pastepaw-icon.png" />
@@ -15,22 +15,22 @@
   </head>
   <body>
     <header class="site-header">
-      <a class="brand" href="#top" aria-label="PastePaw 首页" data-i18n-aria="brandAria">
+      <a class="brand" href="#top" aria-label="PastePaw home" data-i18n-aria="brandAria">
         <img src="./assets/fufu-idle.png" alt="" />
         <span>PastePaw</span>
       </a>
-      <nav aria-label="主要导航" data-i18n-aria="navAria">
-        <a href="#features" data-i18n="navFeatures">功能</a>
-        <a href="#install" data-i18n="navInstall">安装</a>
-        <a href="#more-apps" data-i18n="navMoreApps">更多应用</a>
-        <a href="#privacy" data-i18n="navPrivacy">隐私</a>
+      <nav aria-label="Primary navigation" data-i18n-aria="navAria">
+        <a href="#features" data-i18n="navFeatures">Features</a>
+        <a href="#install" data-i18n="navInstall">Install</a>
+        <a href="#more-apps" data-i18n="navMoreApps">More apps</a>
+        <a href="#privacy" data-i18n="navPrivacy">Privacy</a>
       </nav>
       <div class="header-actions">
         <div class="language-switcher" aria-label="Language">
-          <button type="button" data-language-option="en">EN</button>
-          <button type="button" data-language-option="zh">中文</button>
+          <button type="button" data-language-option="en" aria-pressed="true">EN</button>
+          <button type="button" data-language-option="zh" aria-pressed="false">中文</button>
         </div>
-        <a class="nav-cta" href="#install" data-i18n="navCta">本地运行</a>
+        <a class="nav-cta" href="#install" data-i18n="navCta">Run locally</a>
       </div>
     </header>
 
@@ -38,25 +38,25 @@
       <section class="hero">
         <div class="hero-copy">
           <p class="soft-label" data-i18n="softLabel">FuFu keeps your clipboard cozy</p>
-          <h1 data-i18n="heroTitle">可爱的 macOS 剪贴板历史工具</h1>
+          <h1 data-i18n="heroTitle">A cute clipboard history app for macOS</h1>
           <p class="hero-text" data-i18n="heroText">
-            PastePaw 会在后台记录你最近复制的文字和图片。你可以从主窗口、菜单栏滚动历史，或按 Option+Space 打开底部快捷浮窗，快速找回并复制内容。
+            PastePaw quietly records recently copied text and images in the background. Use the main window, scrollable menu bar history, or the Option+Space bottom quick panel to bring clippings back fast.
           </p>
           <div class="hero-actions">
-            <a class="primary-button" href="#install" data-i18n="primaryCta">本地运行 PastePaw</a>
-            <a class="secondary-button" href="#install" data-i18n="secondaryCta">查看安装方式</a>
+            <a class="primary-button" href="#install" data-i18n="primaryCta">Run PastePaw locally</a>
+            <a class="secondary-button" href="#install" data-i18n="secondaryCta">View install steps</a>
           </div>
         </div>
 
         <div class="hero-art" aria-label="PastePaw app preview" data-i18n-aria="heroArtAria">
           <div class="app-icon-card">
-            <img src="./assets/pastepaw-icon.png" alt="PastePaw App 图标" data-i18n-alt="appIconAlt" />
+            <img src="./assets/pastepaw-icon.png" alt="PastePaw app icon" data-i18n-alt="appIconAlt" />
           </div>
           <div class="speech-card">
             <img src="./assets/fufu-idle.png" alt="FuFu" />
             <div>
-              <strong data-i18n="speechTitle">FuFu 已准备好</strong>
-              <span data-i18n="speechText">按 Option+Space，最近内容就会从底部出现。</span>
+              <strong data-i18n="speechTitle">FuFu is ready</strong>
+              <span data-i18n="speechText">Press Option+Space and your recent clippings slide up from the bottom.</span>
             </div>
           </div>
         </div>
@@ -64,40 +64,40 @@
 
       <section id="features" class="section">
         <div class="section-heading">
-          <h2 data-i18n="featuresTitle">把复制过的内容找回来</h2>
-          <p data-i18n="featuresText">轻量、直观、本地保存，适合每天反复复制文字和图片的工作流。</p>
+          <h2 data-i18n="featuresTitle">Bring copied content back</h2>
+          <p data-i18n="featuresText">Lightweight, local, and direct for daily text and image copying workflows.</p>
         </div>
 
         <div class="feature-grid">
           <article>
             <span class="feature-icon">⌘</span>
-            <h3 data-i18n="featureOneTitle">文字和图片历史</h3>
-            <p data-i18n="featureOneText">自动记录最近复制的文字和原图质量图片，按时间倒序展示。</p>
+            <h3 data-i18n="featureOneTitle">Text and image history</h3>
+            <p data-i18n="featureOneText">Automatically records recently copied text and original-quality images in reverse chronological order.</p>
           </article>
           <article>
             <span class="feature-icon">★</span>
-            <h3 data-i18n="featureTwoTitle">置顶常用内容</h3>
-            <p data-i18n="featureTwoText">重要内容可以置顶保存，不会跟随普通历史一起过期。</p>
+            <h3 data-i18n="featureTwoTitle">Pin frequent items</h3>
+            <p data-i18n="featureTwoText">Keep important clippings pinned so they do not expire with regular history.</p>
           </article>
           <article>
             <span class="feature-icon">⌕</span>
-            <h3 data-i18n="featureThreeTitle">快速搜索</h3>
-            <p data-i18n="featureThreeText">在主窗口中搜索文字历史，快速定位刚刚复制过的片段。</p>
+            <h3 data-i18n="featureThreeTitle">Fast search</h3>
+            <p data-i18n="featureThreeText">Search text history from the main window and find recent snippets quickly.</p>
           </article>
           <article>
             <span class="feature-icon">☰</span>
-            <h3 data-i18n="featureFourTitle">菜单栏快捷复制</h3>
-            <p data-i18n="featureFourText">菜单栏历史支持上下滑动选取，点击后复制回系统剪贴板。</p>
+            <h3 data-i18n="featureFourTitle">Menu bar quick copy</h3>
+            <p data-i18n="featureFourText">Scroll through recent history from the menu bar and copy items back to the system clipboard.</p>
           </article>
           <article>
             <span class="feature-icon">⌥</span>
-            <h3 data-i18n="featureFiveTitle">底部快捷浮窗</h3>
-            <p data-i18n="featureFiveText">默认按 Option+Space 打开和屏幕一样长的底部历史浮窗。</p>
+            <h3 data-i18n="featureFiveTitle">Bottom quick panel</h3>
+            <p data-i18n="featureFiveText">Press Option+Space by default to open a full-width bottom panel for recent history.</p>
           </article>
           <article>
             <span class="feature-icon">⌨</span>
-            <h3 data-i18n="featureSixTitle">自定义快捷键</h3>
-            <p data-i18n="featureSixText">在设置里修改快捷键和浮窗历史数量，贴合自己的复制工作流。</p>
+            <h3 data-i18n="featureSixTitle">Custom shortcuts</h3>
+            <p data-i18n="featureSixText">Change the shortcut and customize the panel history count up to 50 items in settings.</p>
           </article>
         </div>
       </section>
@@ -105,9 +105,9 @@
       <section id="install" class="section install-section">
         <div class="install-card">
           <div>
-            <h2 data-i18n="installTitle">本地运行</h2>
+            <h2 data-i18n="installTitle">Run locally</h2>
             <p data-i18n="installText">
-              当前项目已经包含 macOS 应用和静态网页。使用项目脚本可以构建并打开 PastePaw。
+              This project includes the macOS app and the static website. Use the project script to build and open PastePaw.
             </p>
           </div>
           <code>./script/build_and_run.sh</code>
@@ -116,9 +116,9 @@
 
       <section id="privacy" class="section privacy-section">
         <div class="section-heading">
-          <h2 data-i18n="privacyTitle">只在你的 Mac 上保存</h2>
+          <h2 data-i18n="privacyTitle">Stored only on your Mac</h2>
           <p data-i18n="privacyText">
-            PastePaw 的历史记录保存在本机 Application Support，不同步、不上传。你可以设置保留天数，并随时清空非置顶记录。
+            PastePaw saves history locally in Application Support. It does not sync or upload your data. You can choose retention days and clear non-pinned history anytime.
           </p>
         </div>
       </section>
@@ -126,9 +126,9 @@
       <section id="more-apps" class="section more-apps-section">
         <div class="more-apps-card">
           <div class="section-heading">
-            <h2 data-i18n="moreAppsTitle">想看看更多 FuFu 应用？</h2>
+            <h2 data-i18n="moreAppsTitle">Want more FuFu apps?</h2>
             <p data-i18n="moreAppsText">
-              FuFu 也在其他小工具里陪你工作和休息。看看 SlackerBuddy，让它在桌面上提醒你喝水、休息和放松。
+              FuFu can keep you company in other tiny tools too. Visit SlackerBuddy for a desktop pet that reminds you to drink water, rest, and relax.
             </p>
           </div>
           <a
