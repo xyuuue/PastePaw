@@ -59,8 +59,13 @@ enum LocalizedText {
         case quickPanel
         case quickPanelTitle
         case quickPanelSubtitle
+        case quickPanelShortcutDismissSubtitle
         case quickPanelCollapsedHint
         case quickPanelShortcut
+        case quickPanelDismissalMode
+        case quickPanelDismissOnMouseExit
+        case quickPanelDismissWithShortcut
+        case quickPanelDismissalHint
         case quickPanelHistoryItems
         case quickPanelHistoryMaxWarning
         case quickPanelSettingsHint
@@ -73,6 +78,15 @@ enum LocalizedText {
         case pressShortcut
         case resetShortcut
         case close
+        case cancel
+        case tags
+        case allTags
+        case newTag
+        case addTag
+        case tagName
+        case assignTags
+        case noTagsYet
+        case taggedRetentionHint
         case language
         case appLanguage
         case privacy
@@ -106,15 +120,20 @@ enum LocalizedText {
         .keepNormalItems: "Keep normal items",
         .day: "day",
         .days: "days",
-        .pinnedRetentionHint: "Pinned items are kept until you unpin or delete them.",
+        .pinnedRetentionHint: "Pinned or tagged items are kept until you unpin, remove tags, or delete them.",
         .menuBar: "Menu Bar",
         .menuBarHistoryItems: "Menu bar history items",
         .menuBarHistoryHint: "These items appear in the menu bar menu for one-click copy back to the clipboard.",
         .quickPanel: "Quick Panel",
         .quickPanelTitle: "FuFu Clipboard",
         .quickPanelSubtitle: "Click an item to copy it back. Move the mouse away to close the panel.",
+        .quickPanelShortcutDismissSubtitle: "Click an item to copy it back. Press the shortcut again to close the panel.",
         .quickPanelCollapsedHint: "Hover to open recent clips",
         .quickPanelShortcut: "Shortcut",
+        .quickPanelDismissalMode: "Close panel",
+        .quickPanelDismissOnMouseExit: "Mouse leaves",
+        .quickPanelDismissWithShortcut: "Shortcut again",
+        .quickPanelDismissalHint: "Choose whether the panel closes automatically when the mouse leaves or stays open until you press the shortcut again.",
         .quickPanelHistoryItems: "Panel history items",
         .quickPanelHistoryMaxWarning: "Maximum is 50 items.",
         .quickPanelSettingsHint: "Press the shortcut to show the bottom panel. The default shortcut is Option + Space.",
@@ -127,10 +146,19 @@ enum LocalizedText {
         .pressShortcut: "Press shortcut",
         .resetShortcut: "Reset shortcut",
         .close: "Close",
+        .cancel: "Cancel",
+        .tags: "Tags",
+        .allTags: "All",
+        .newTag: "New Tag",
+        .addTag: "Add Tag",
+        .tagName: "Tag name",
+        .assignTags: "Assign Tags",
+        .noTagsYet: "No tags yet",
+        .taggedRetentionHint: "Tagged items are kept until you remove their tags or delete them.",
         .language: "Language",
         .appLanguage: "App language",
         .privacy: "Privacy",
-        .clearNonPinned: "Clear Non-Pinned History",
+        .clearNonPinned: "Clear Unprotected History",
         .privacyHint: "PastePaw stores history locally in Application Support and does not sync or upload it."
     ]
 
@@ -160,15 +188,20 @@ enum LocalizedText {
         .keepNormalItems: "普通记录保留",
         .day: "天",
         .days: "天",
-        .pinnedRetentionHint: "置顶内容会一直保留，直到你取消置顶或删除。",
+        .pinnedRetentionHint: "置顶或带标签的内容会一直保留，直到你取消置顶、移除标签或删除。",
         .menuBar: "菜单栏",
         .menuBarHistoryItems: "菜单栏历史数量",
         .menuBarHistoryHint: "这些记录会显示在菜单栏菜单中，点击即可复制回剪贴板。",
         .quickPanel: "快捷浮窗",
         .quickPanelTitle: "FuFu 剪贴板",
         .quickPanelSubtitle: "点击记录即可复制回剪贴板，鼠标移开后会自动关闭。",
+        .quickPanelShortcutDismissSubtitle: "点击记录即可复制回剪贴板，再次按快捷键关闭浮窗。",
         .quickPanelCollapsedHint: "悬停打开近期记录",
         .quickPanelShortcut: "快捷键",
+        .quickPanelDismissalMode: "关闭浮窗",
+        .quickPanelDismissOnMouseExit: "鼠标移开",
+        .quickPanelDismissWithShortcut: "再次按快捷键",
+        .quickPanelDismissalHint: "可以选择鼠标移开自动关闭，或让浮窗保持打开直到再次按快捷键。",
         .quickPanelHistoryItems: "浮窗历史数量",
         .quickPanelHistoryMaxWarning: "最多 50 个。",
         .quickPanelSettingsHint: "按下快捷键即可打开底部浮窗，默认快捷键是 Option + Space。",
@@ -181,10 +214,19 @@ enum LocalizedText {
         .pressShortcut: "按下快捷键",
         .resetShortcut: "重置快捷键",
         .close: "关闭",
+        .cancel: "取消",
+        .tags: "标签",
+        .allTags: "全部",
+        .newTag: "新标签",
+        .addTag: "添加标签",
+        .tagName: "标签名称",
+        .assignTags: "分配标签",
+        .noTagsYet: "还没有标签",
+        .taggedRetentionHint: "带标签的内容会一直保留，直到你移除标签或删除内容。",
         .language: "语言",
         .appLanguage: "应用语言",
         .privacy: "隐私",
-        .clearNonPinned: "清空非置顶历史",
+        .clearNonPinned: "清空未保护历史",
         .privacyHint: "PastePaw 只在本机 Application Support 中保存历史，不同步也不上传。"
     ]
 }

@@ -70,7 +70,7 @@ footer img {
 nav {
   display: flex;
   align-items: center;
-  gap: 22px;
+  gap: 18px;
   color: var(--coffee-soft);
   font-size: 15px;
   font-weight: 700;
@@ -406,7 +406,7 @@ code {
 
 .more-apps-card {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 320px;
+  grid-template-columns: minmax(0, 1fr) 360px;
   align-items: center;
   gap: 28px;
   padding: 34px;
@@ -418,6 +418,11 @@ code {
 
 .more-apps-card .section-heading {
   margin-bottom: 0;
+}
+
+.app-links {
+  display: grid;
+  gap: 14px;
 }
 
 .app-link-card {
@@ -437,6 +442,20 @@ code {
   height: 78px;
   border-radius: 20px;
   box-shadow: 0 10px 24px rgba(70, 39, 18, 0.12);
+}
+
+.portfolio-mark {
+  flex: 0 0 auto;
+  width: 78px;
+  height: 78px;
+  display: grid;
+  place-items: center;
+  border-radius: 20px;
+  color: #fff7ea;
+  background: var(--coffee);
+  box-shadow: 0 10px 24px rgba(70, 39, 18, 0.12);
+  font-size: 24px;
+  font-weight: 950;
 }
 
 .app-link-card strong,
@@ -512,17 +531,23 @@ footer img {
     width: min(100% - 22px, 1120px);
   }
 
+  .site-header {
+    flex-wrap: wrap;
+  }
+
   .brand span {
     font-size: 18px;
   }
 
   .nav-cta {
+    flex: 1;
     min-height: 34px;
     padding: 0 12px;
     font-size: 13px;
   }
 
   .header-actions {
+    width: 100%;
     gap: 6px;
   }
 

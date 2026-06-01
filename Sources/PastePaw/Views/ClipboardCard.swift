@@ -31,6 +31,8 @@ struct ClipboardCard: View {
                     Text(item.createdAt.formatted(date: .abbreviated, time: .shortened))
                         .font(.caption)
                         .foregroundStyle(PastePawTheme.coffee.opacity(0.62))
+
+                    TagChipsView(tags: store.tags(for: item), limit: 4, compact: true)
                 }
 
                 Spacer()

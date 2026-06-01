@@ -24,6 +24,88 @@ final class HistoryRulesTests: XCTestCase {
         XCTAssertEqual(Set(result.map(\.id)), Set([expiredPinned.id, freshNormal.id]))
     }
 
+    func testLegacyDecodedItemsDefaultTagIDsToEmpty() throws {
+        let json = """
+        {
+          "content": {
+            "text": {
+              "_0": "legacy clipping"
+            }
+          },
+          "createdAt": -978307200,
+          "id": "00000000-0000-0000-0000-000000000001",
+          "isPinned": false
+        }
+        """
+
+        let item = try JSONDecoder().decode(ClipboardHistoryItem.self, from: Data(json.utf8))
+
+        XCTAssertEqual(item.tagIDs, [])
+    }
+
+    func testRetentionKeepsTaggedItemsAndDropsExpiredNormalItems() {
+        let now = Date()
+        let tagID = UUID()
+        let expiredTagged = ClipboardHistoryItem(
+            createdAt: now.addingTimeInterval(-5 * 24 * 60 * 60),
+            tagIDs: [tagID],
+            content: .text("keep tagged")
+        )
+        let expiredNormal = ClipboardHistoryItem(
+            createdAt: now.addingTimeInterval(-5 * 24 * 60 * 60),
+            content: .text("drop normal")
+        )
+
+        let result = HistoryRules.retainedItems([expiredTagged, expiredNormal], retentionDays: 3, now: now)
+
+        XCTAssertEqual(result.map(\.id), [expiredTagged.id])
+    }
+
+    func testTagFilteringMatchesSelectedTagsAndAllowsAllItems() {
+        let firstTagID = UUID()
+        let secondTagID = UUID()
+        let item = ClipboardHistoryItem(tagIDs: [firstTagID, secondTagID], content: .text("tagged"))
+
+        XCTAssertTrue(HistoryRules.matchesTag(item, selectedTagID: nil))
+        XCTAssertTrue(HistoryRules.matchesTag(item, selectedTagID: firstTagID))
+        XCTAssertTrue(HistoryRules.matchesTag(item, selectedTagID: secondTagID))
+        XCTAssertFalse(HistoryRules.matchesTag(item, selectedTagID: UUID()))
+    }
+
+    func testClipboardTagDefaultsToFirstPaletteColor() {
+        let tag = ClipboardTag(name: "Prompt")
+
+        XCTAssertEqual(tag.colorHex, ClipboardTag.defaultColorHex)
+    }
+
+    func testClipboardTagColorOptionsUseReadableNames() {
+        XCTAssertEqual(ClipboardTag.colorHexes, ClipboardTag.colorOptions.map(\.hex))
+        XCTAssertTrue(ClipboardTag.colorOptions.allSatisfy { !$0.name.hasPrefix("#") })
+    }
+
+    func testLegacyDecodedTagsDefaultToFirstPaletteColor() throws {
+        let json = """
+        {
+          "createdAt": -978307200,
+          "id": "00000000-0000-0000-0000-000000000002",
+          "name": "Prompt"
+        }
+        """
+
+        let tag = try JSONDecoder().decode(ClipboardTag.self, from: Data(json.utf8))
+
+        XCTAssertEqual(tag.colorHex, ClipboardTag.defaultColorHex)
+    }
+
+    func testQuickPanelDismissalModeDefaultsToMouseExit() {
+        XCTAssertEqual(QuickPanelDismissalMode.defaultMode, .mouseExit)
+    }
+
+    func testQuickPanelDismissalModeRawValuesAreStableForUserDefaults() {
+        XCTAssertEqual(QuickPanelDismissalMode.mouseExit.rawValue, "mouseExit")
+        XCTAssertEqual(QuickPanelDismissalMode.shortcutToggle.rawValue, "shortcutToggle")
+    }
+
     func testTextSearchIsCaseInsensitiveAndImagesDoNotMatchTextQueries() {
         let text = ClipboardHistoryItem(content: .text("FuFu coffee note"))
         let image = ClipboardHistoryItem(content: .image(ImagePayload(fileName: "image.png", pasteboardType: "public.png", byteCount: 10)))

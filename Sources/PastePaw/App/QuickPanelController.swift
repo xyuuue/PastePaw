@@ -7,7 +7,7 @@ final class QuickPanelController {
     private var panel: NSPanel?
     private var hideTask: Task<Void, Never>?
 
-    private let expandedHeight: CGFloat = 258
+    private let expandedHeight: CGFloat = 292
 
     init(store: ClipboardHistoryStore) {
         self.store = store
@@ -70,6 +70,11 @@ final class QuickPanelController {
         panel?.contentView = NSHostingView(
             rootView: QuickPanelView(
                 onHoverChanged: { [weak self] isHovering in
+                    guard self?.store.quickPanelDismissalMode == .mouseExit else {
+                        self?.cancelScheduledHide()
+                        return
+                    }
+
                     if isHovering {
                         self?.cancelScheduledHide()
                     } else {

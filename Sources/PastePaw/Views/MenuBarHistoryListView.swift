@@ -66,6 +66,8 @@ private struct MenuBarHistoryRow: View {
                                 .font(.system(size: 10, weight: .bold))
                                 .foregroundStyle(PastePawTheme.caramel)
                         }
+
+                        TagChipsView(tags: store.tags(for: item), limit: 1, compact: true)
                     }
 
                     Text(subtitle)

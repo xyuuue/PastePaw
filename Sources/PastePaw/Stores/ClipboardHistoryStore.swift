@@ -7,7 +7,9 @@ final class ClipboardHistoryStore: ObservableObject {
     static let shared = ClipboardHistoryStore()
 
     @Published private(set) var items: [ClipboardHistoryItem] = []
+    @Published private(set) var tags: [ClipboardTag] = []
     @Published var searchText = ""
+    @Published var selectedQuickPanelTagID: UUID?
     @Published var retentionDays: Int {
         didSet {
             UserDefaults.standard.set(retentionDays, forKey: Self.retentionDaysKey)
@@ -41,6 +43,11 @@ final class ClipboardHistoryStore: ObservableObject {
             UserDefaults.standard.set(encodedShortcut(quickPanelShortcut), forKey: Self.quickPanelShortcutKey)
         }
     }
+    @Published var quickPanelDismissalMode: QuickPanelDismissalMode {
+        didSet {
+            UserDefaults.standard.set(quickPanelDismissalMode.rawValue, forKey: Self.quickPanelDismissalModeKey)
+        }
+    }
     @Published var appLanguage: AppLanguage {
         didSet {
             UserDefaults.standard.set(appLanguage.rawValue, forKey: Self.appLanguageKey)
@@ -55,11 +62,13 @@ final class ClipboardHistoryStore: ObservableObject {
     private static let menuHistoryCountKey = "menuHistoryCount"
     private static let quickPanelHistoryCountKey = "quickPanelHistoryCount"
     private static let quickPanelShortcutKey = "quickPanelShortcut"
+    private static let quickPanelDismissalModeKey = "quickPanelDismissalMode"
     private static let appLanguageKey = "appLanguage"
 
     private let fileManager: FileManager
     private let rootDirectory: URL
     private let metadataURL: URL
+    private let tagsURL: URL
     let imagesDirectory: URL
     private var monitor: ClipboardMonitor?
 
@@ -69,6 +78,7 @@ final class ClipboardHistoryStore: ObservableObject {
             ?? URL(fileURLWithPath: NSTemporaryDirectory())
         self.rootDirectory = supportDirectory.appendingPathComponent("PastePaw", isDirectory: true)
         self.metadataURL = rootDirectory.appendingPathComponent("history.json")
+        self.tagsURL = rootDirectory.appendingPathComponent("tags.json")
         self.imagesDirectory = rootDirectory.appendingPathComponent("Images", isDirectory: true)
 
         let savedRetentionDays = UserDefaults.standard.integer(forKey: Self.retentionDaysKey)
@@ -78,10 +88,14 @@ final class ClipboardHistoryStore: ObservableObject {
         let savedQuickPanelHistoryCount = UserDefaults.standard.integer(forKey: Self.quickPanelHistoryCountKey)
         self.quickPanelHistoryCount = Self.quickPanelHistoryRange.contains(savedQuickPanelHistoryCount) ? savedQuickPanelHistoryCount : 7
         self.quickPanelShortcut = Self.decodedShortcut() ?? .defaultQuickPanel
+        let savedQuickPanelDismissalMode = UserDefaults.standard.string(forKey: Self.quickPanelDismissalModeKey)
+            .flatMap(QuickPanelDismissalMode.init(rawValue:))
+        self.quickPanelDismissalMode = savedQuickPanelDismissalMode ?? .defaultMode
         let savedLanguage = UserDefaults.standard.string(forKey: Self.appLanguageKey)
             .flatMap(AppLanguage.init(rawValue:))
         self.appLanguage = savedLanguage ?? .english
 
+        loadTags()
         load()
         applyRetentionAndSave()
         startMonitoring()
@@ -102,7 +116,89 @@ final class ClipboardHistoryStore: ObservableObject {
     }
 
     var recentQuickPanelItems: [ClipboardHistoryItem] {
-        Array(HistoryRules.orderedItems(items).prefix(quickPanelHistoryCount))
+        Array(
+            HistoryRules.orderedItems(items)
+                .filter { HistoryRules.matchesTag($0, selectedTagID: selectedQuickPanelTagID) }
+                .prefix(quickPanelHistoryCount)
+        )
+    }
+
+    func tags(for item: ClipboardHistoryItem) -> [ClipboardTag] {
+        item.tagIDs.compactMap { tagID in
+            tags.first { $0.id == tagID }
+        }
+    }
+
+    func createTag(named rawName: String) -> ClipboardTag? {
+        let name = normalizedTagName(rawName)
+        guard !name.isEmpty else {
+            return nil
+        }
+
+        if let existingTag = tags.first(where: { $0.name.caseInsensitiveCompare(name) == .orderedSame }) {
+            return existingTag
+        }
+
+        let tag = ClipboardTag(name: name, colorHex: nextTagColorHex())
+        tags.append(tag)
+        saveTags()
+        return tag
+    }
+
+    func renameTag(_ tag: ClipboardTag, to rawName: String) {
+        let name = normalizedTagName(rawName)
+        guard !name.isEmpty else {
+            return
+        }
+        guard !tags.contains(where: { $0.id != tag.id && $0.name.caseInsensitiveCompare(name) == .orderedSame }) else {
+            return
+        }
+        guard let index = tags.firstIndex(where: { $0.id == tag.id }) else {
+            return
+        }
+
+        tags[index].name = name
+        saveTags()
+    }
+
+    func updateTagColor(_ tag: ClipboardTag, colorHex: String) {
+        guard ClipboardTag.colorHexes.contains(colorHex) else {
+            return
+        }
+        guard let index = tags.firstIndex(where: { $0.id == tag.id }) else {
+            return
+        }
+
+        tags[index].colorHex = colorHex
+        saveTags()
+    }
+
+    func deleteTag(_ tag: ClipboardTag) {
+        tags.removeAll { $0.id == tag.id }
+        if selectedQuickPanelTagID == tag.id {
+            selectedQuickPanelTagID = nil
+        }
+
+        for index in items.indices {
+            items[index].tagIDs.removeAll { $0 == tag.id }
+        }
+
+        saveTags()
+        applyRetentionAndSave()
+    }
+
+    func toggleTag(_ tag: ClipboardTag, for item: ClipboardHistoryItem) {
+        guard let index = items.firstIndex(where: { $0.id == item.id }) else {
+            return
+        }
+
+        if items[index].tagIDs.contains(tag.id) {
+            items[index].tagIDs.removeAll { $0 == tag.id }
+        } else {
+            items[index].tagIDs.append(tag.id)
+        }
+
+        applyRetentionAndSave()
     }
 
     func resetQuickPanelShortcut() {
@@ -163,8 +259,8 @@ final class ClipboardHistoryStore: ObservableObject {
     }
 
     func clearUnpinned() {
-        let removedItems = items.filter { !$0.isPinned }
-        items.removeAll { !$0.isPinned }
+        let removedItems = items.filter { !$0.isPinned && $0.tagIDs.isEmpty }
+        items.removeAll { !$0.isPinned && $0.tagIDs.isEmpty }
 
         for item in removedItems {
             if case .image(let payload) = item.content {
@@ -203,6 +299,24 @@ final class ClipboardHistoryStore: ObservableObject {
         }
     }
 
+    private func loadTags() {
+        do {
+            try fileManager.createDirectory(at: rootDirectory, withIntermediateDirectories: true)
+
+            guard fileManager.fileExists(atPath: tagsURL.path) else {
+                tags = []
+                return
+            }
+
+            let data = try Data(contentsOf: tagsURL)
+            tags = try JSONDecoder().decode([ClipboardTag].self, from: data)
+            lastError = nil
+        } catch {
+            tags = []
+            lastError = "Could not load tags: \(error.localizedDescription)"
+        }
+    }
+
     private func save() {
         do {
             try fileManager.createDirectory(at: rootDirectory, withIntermediateDirectories: true)
@@ -213,6 +327,19 @@ final class ClipboardHistoryStore: ObservableObject {
             lastError = nil
         } catch {
             lastError = "Could not save clipboard history: \(error.localizedDescription)"
+        }
+    }
+
+    private func saveTags() {
+        do {
+            try fileManager.createDirectory(at: rootDirectory, withIntermediateDirectories: true)
+            let encoder = JSONEncoder()
+            encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+            let data = try encoder.encode(tags)
+            try data.write(to: tagsURL, options: .atomic)
+            lastError = nil
+        } catch {
+            lastError = "Could not save tags: \(error.localizedDescription)"
         }
     }
 
@@ -234,5 +361,13 @@ final class ClipboardHistoryStore: ObservableObject {
 
     private func encodedShortcut(_ shortcut: PastePawKeyboardShortcut) -> Data? {
         try? JSONEncoder().encode(shortcut)
+    }
+
+    private func normalizedTagName(_ name: String) -> String {
+        name.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    private func nextTagColorHex() -> String {
+        ClipboardTag.colorHexes[tags.count % ClipboardTag.colorHexes.count]
     }
 }
