@@ -101,8 +101,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
         for url in candidates {
             if let image = NSImage(contentsOf: url) {
-                image.size = NSSize(width: 30, height: 30)
-                image.isTemplate = false
+                image.size = NSSize(width: 18, height: 18)
+                image.isTemplate = true
                 return image
             }
         }
