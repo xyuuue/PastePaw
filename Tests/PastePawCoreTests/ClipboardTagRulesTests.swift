@@ -34,4 +34,19 @@ struct ClipboardTagRulesTests {
 
         #expect(colorHex == ClipboardTag.defaultColorHex)
     }
+
+    @Test func quickPanelCardAccentUsesFirstAssignedTagColor() {
+        let linkTag = ClipboardTag(name: "Link", colorHex: "#D97757")
+        let codexTag = ClipboardTag(name: "Codex", colorHex: "#5C7FA8")
+
+        let colorHex = ClipboardItemAccentRules.quickPanelCardAccentColorHex(tags: [linkTag, codexTag])
+
+        #expect(colorHex == linkTag.colorHex)
+    }
+
+    @Test func quickPanelCardAccentDefaultsToCoffeeWhenItemHasNoTags() {
+        let colorHex = ClipboardItemAccentRules.quickPanelCardAccentColorHex(tags: [])
+
+        #expect(colorHex == ClipboardTag.defaultColorHex)
+    }
 }

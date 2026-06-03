@@ -470,12 +470,9 @@ private struct QuickPanelCard: View {
     }
 
     private var cardAccent: Color {
-        switch item.content {
-        case .text:
-            PastePawTheme.caramel
-        case .image:
-            PastePawTheme.blush
-        }
+        TagColorSwatch.color(
+            hex: ClipboardItemAccentRules.quickPanelCardAccentColorHex(tags: store.tags(for: item))
+        )
     }
 
     @ViewBuilder
