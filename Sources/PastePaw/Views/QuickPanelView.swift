@@ -337,6 +337,8 @@ struct QuickPanelView: View {
 
 private struct QuickPanelCard: View {
     @EnvironmentObject private var store: ClipboardHistoryStore
+    @State private var copiedItemID: UUID?
+    @State private var copyFeedbackTask: Task<Void, Never>?
     let item: ClipboardHistoryItem
     let onRenameTitle: (ClipboardHistoryItem) -> Void
     let onCreateAndAssignTag: (ClipboardHistoryItem) -> Void
@@ -380,9 +382,12 @@ private struct QuickPanelCard: View {
         .background(.white.opacity(0.82), in: RoundedRectangle(cornerRadius: 8))
         .overlay(
             RoundedRectangle(cornerRadius: 8)
-                .stroke(item.isPinned ? PastePawTheme.caramel : PastePawTheme.warmCream, lineWidth: item.isPinned ? 1.4 : 1)
+                .stroke(cardBorderColor, lineWidth: isShowingCopyFeedback || item.isPinned ? 1.4 : 1)
         )
         .help(store.localized(.copyHelp))
+        .onDisappear {
+            copyFeedbackTask?.cancel()
+        }
     }
 
     @ViewBuilder
@@ -400,28 +405,76 @@ private struct QuickPanelCard: View {
     }
 
     private var copyArea: some View {
-        Button {
-            store.copyToPasteboard(item)
-        } label: {
-            VStack(alignment: .leading, spacing: 8) {
-                content
-                    .padding(.horizontal, 10)
+        Button(action: copyItem) {
+            ZStack(alignment: .bottomTrailing) {
+                VStack(alignment: .leading, spacing: 8) {
+                    content
+                        .padding(.horizontal, 10)
 
-                TagChipsView(tags: store.tags(for: item), limit: 2, compact: true)
-                    .padding(.horizontal, 10)
+                    TagChipsView(tags: store.tags(for: item), limit: 2, compact: true)
+                        .padding(.horizontal, 10)
 
-                Spacer(minLength: 0)
+                    Spacer(minLength: 0)
 
-                Text(item.createdAt.formatted(date: .omitted, time: .shortened))
-                    .font(.caption2)
-                    .foregroundStyle(PastePawTheme.coffee.opacity(0.58))
-                    .padding(.horizontal, 10)
-                    .padding(.bottom, 10)
+                    Text(item.createdAt.formatted(date: .omitted, time: .shortened))
+                        .font(.caption2)
+                        .foregroundStyle(PastePawTheme.coffee.opacity(0.58))
+                        .padding(.horizontal, 10)
+                        .padding(.bottom, 10)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+
+                if isShowingCopyFeedback {
+                    CopyFeedbackBadge(title: store.localized(.copiedFeedback))
+                        .padding(8)
+                        .transition(.scale(scale: 0.92).combined(with: .opacity))
+                }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+        .accessibilityLabel(isShowingCopyFeedback ? store.localized(.copiedFeedback) : store.localized(.copyHelp))
+    }
+
+    private var isShowingCopyFeedback: Bool {
+        CopyFeedbackRules.isShowingFeedback(activeItemID: copiedItemID, itemID: item.id)
+    }
+
+    private var cardBorderColor: Color {
+        if isShowingCopyFeedback {
+            return PastePawTheme.caramel.opacity(0.92)
+        }
+
+        return item.isPinned ? PastePawTheme.caramel : PastePawTheme.warmCream
+    }
+
+    private func copyItem() {
+        guard store.copyToPasteboard(item) else {
+            return
+        }
+
+        showCopyFeedback()
+    }
+
+    private func showCopyFeedback() {
+        copyFeedbackTask?.cancel()
+
+        withAnimation(.spring(response: 0.2, dampingFraction: 0.72)) {
+            copiedItemID = item.id
+        }
+
+        copyFeedbackTask = Task { @MainActor in
+            try? await Task.sleep(nanoseconds: CopyFeedbackRules.visibleDurationNanoseconds)
+
+            guard !Task.isCancelled else {
+                return
+            }
+
+            withAnimation(.easeOut(duration: 0.18)) {
+                copiedItemID = nil
+            }
+        }
     }
 
     @ViewBuilder
@@ -504,6 +557,21 @@ private struct QuickPanelCard: View {
         }
     }
 
+}
+
+private struct CopyFeedbackBadge: View {
+    let title: String
+
+    var body: some View {
+        Label(title, systemImage: "checkmark.circle.fill")
+            .font(.system(size: 10, weight: .bold, design: .rounded))
+            .foregroundStyle(.white)
+            .lineLimit(1)
+            .padding(.horizontal, 7)
+            .padding(.vertical, 4)
+            .background(PastePawTheme.caramel, in: Capsule())
+            .shadow(color: PastePawTheme.caramel.opacity(0.25), radius: 5, y: 2)
+    }
 }
 
 private enum QuickPanelEditor: Equatable {

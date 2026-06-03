@@ -4,6 +4,8 @@ import PastePawCore
 
 struct ClipboardCard: View {
     @EnvironmentObject private var store: ClipboardHistoryStore
+    @State private var copiedItemID: UUID?
+    @State private var copyFeedbackTask: Task<Void, Never>?
     let item: ClipboardHistoryItem
 
     var body: some View {
@@ -38,12 +40,13 @@ struct ClipboardCard: View {
                 Spacer()
 
                 HStack(spacing: 6) {
-                    Button {
-                        store.copyToPasteboard(item)
-                    } label: {
-                        Image(systemName: "doc.on.clipboard")
+                    Button(action: copyItem) {
+                        Image(systemName: CopyFeedbackRules.copyButtonSystemImage(isShowingFeedback: isShowingCopyFeedback))
+                            .symbolEffect(.bounce, value: isShowingCopyFeedback)
+                            .foregroundStyle(isShowingCopyFeedback ? PastePawTheme.caramel : PastePawTheme.coffee)
                     }
-                    .help(store.localized(.copyHelp))
+                    .help(isShowingCopyFeedback ? store.localized(.copiedFeedback) : store.localized(.copyHelp))
+                    .accessibilityLabel(isShowingCopyFeedback ? store.localized(.copiedFeedback) : store.localized(.copyHelp))
 
                     Button {
                         store.togglePin(item)
@@ -72,6 +75,41 @@ struct ClipboardCard: View {
             RoundedRectangle(cornerRadius: 8)
                 .stroke(item.isPinned ? PastePawTheme.caramel : PastePawTheme.warmCream, lineWidth: item.isPinned ? 1.4 : 1)
         )
+        .onDisappear {
+            copyFeedbackTask?.cancel()
+        }
+    }
+
+    private var isShowingCopyFeedback: Bool {
+        CopyFeedbackRules.isShowingFeedback(activeItemID: copiedItemID, itemID: item.id)
+    }
+
+    private func copyItem() {
+        guard store.copyToPasteboard(item) else {
+            return
+        }
+
+        showCopyFeedback()
+    }
+
+    private func showCopyFeedback() {
+        copyFeedbackTask?.cancel()
+
+        withAnimation(.spring(response: 0.2, dampingFraction: 0.7)) {
+            copiedItemID = item.id
+        }
+
+        copyFeedbackTask = Task { @MainActor in
+            try? await Task.sleep(nanoseconds: CopyFeedbackRules.visibleDurationNanoseconds)
+
+            guard !Task.isCancelled else {
+                return
+            }
+
+            withAnimation(.easeOut(duration: 0.18)) {
+                copiedItemID = nil
+            }
+        }
     }
 
     private var symbolName: String {

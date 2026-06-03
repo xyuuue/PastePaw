@@ -256,13 +256,16 @@ final class ClipboardHistoryStore: ObservableObject {
         }
     }
 
-    func copyToPasteboard(_ item: ClipboardHistoryItem) {
+    @discardableResult
+    func copyToPasteboard(_ item: ClipboardHistoryItem) -> Bool {
         do {
             let changeCount = try PasteboardReader.writeToPasteboard(item, imagesDirectory: imagesDirectory)
             monitor?.skipNextChangeCount(changeCount)
             lastError = nil
+            return true
         } catch {
             lastError = "Could not copy item back to clipboard: \(error.localizedDescription)"
+            return false
         }
     }
 

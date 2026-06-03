@@ -42,6 +42,7 @@ enum LocalizedText {
         case emptyHistoryHint
         case pinned
         case copyHelp
+        case copiedFeedback
         case pin
         case unpin
         case delete
@@ -119,6 +120,7 @@ enum LocalizedText {
         .emptyHistoryHint: "Copy text or an image in any app and FuFu will keep it here.",
         .pinned: "Pinned",
         .copyHelp: "Copy back to clipboard",
+        .copiedFeedback: "Copied",
         .pin: "Pin",
         .unpin: "Unpin",
         .delete: "Delete",
@@ -196,6 +198,7 @@ enum LocalizedText {
         .emptyHistoryHint: "复制任意文字或图片后，FuFu 会把它保存到这里。",
         .pinned: "已置顶",
         .copyHelp: "复制回剪贴板",
+        .copiedFeedback: "已复制",
         .pin: "置顶",
         .unpin: "取消置顶",
         .delete: "删除",
