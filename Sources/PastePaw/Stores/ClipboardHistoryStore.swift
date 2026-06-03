@@ -129,8 +129,8 @@ final class ClipboardHistoryStore: ObservableObject {
         }
     }
 
-    func createTag(named rawName: String) -> ClipboardTag? {
-        let name = normalizedTagName(rawName)
+    func createTag(named rawName: String, colorHex requestedColorHex: String? = nil) -> ClipboardTag? {
+        let name = ClipboardTagRules.normalizedName(rawName)
         guard !name.isEmpty else {
             return nil
         }
@@ -139,14 +139,17 @@ final class ClipboardHistoryStore: ObservableObject {
             return existingTag
         }
 
-        let tag = ClipboardTag(name: name, colorHex: nextTagColorHex())
+        let tag = ClipboardTag(
+            name: name,
+            colorHex: ClipboardTagRules.resolvedColorHex(requestedColorHex, fallback: nextTagColorHex())
+        )
         tags.append(tag)
         saveTags()
         return tag
     }
 
     func renameTag(_ tag: ClipboardTag, to rawName: String) {
-        let name = normalizedTagName(rawName)
+        let name = ClipboardTagRules.normalizedName(rawName)
         guard !name.isEmpty else {
             return
         }
@@ -162,7 +165,7 @@ final class ClipboardHistoryStore: ObservableObject {
     }
 
     func updateTagColor(_ tag: ClipboardTag, colorHex: String) {
-        guard ClipboardTag.colorHexes.contains(colorHex) else {
+        guard ClipboardTagRules.resolvedColorHex(colorHex, fallback: "") == colorHex else {
             return
         }
         guard let index = tags.firstIndex(where: { $0.id == tag.id }) else {
@@ -203,6 +206,10 @@ final class ClipboardHistoryStore: ObservableObject {
 
     func resetQuickPanelShortcut() {
         quickPanelShortcut = .defaultQuickPanel
+    }
+
+    func suggestedTagColorHex() -> String {
+        nextTagColorHex()
     }
 
     func renameTitle(for item: ClipboardHistoryItem, to rawTitle: String) {
@@ -372,10 +379,6 @@ final class ClipboardHistoryStore: ObservableObject {
 
     private func encodedShortcut(_ shortcut: PastePawKeyboardShortcut) -> Data? {
         try? JSONEncoder().encode(shortcut)
-    }
-
-    private func normalizedTagName(_ name: String) -> String {
-        name.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
     private func nextTagColorHex() -> String {

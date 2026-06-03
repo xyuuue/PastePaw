@@ -103,6 +103,13 @@ struct QuickPanelView: View {
                             ) {
                                 store.selectedQuickPanelTagID = tag.id
                             }
+                            .contextMenu {
+                                Button {
+                                    editQuickPanelTag(tag)
+                                } label: {
+                                    Label(store.localized(.editTag), systemImage: "pencil")
+                                }
+                            }
                         }
 
                         TagFilterButton(
@@ -170,18 +177,38 @@ struct QuickPanelView: View {
     }
 
     private func createQuickPanelTag() {
-        guard let name = TagPrompt.requestName(
+        guard let details = TagPrompt.requestTagDetails(
             title: store.localized(.newTag),
-            placeholder: store.localized(.tagName),
+            namePlaceholder: store.localized(.tagName),
+            colorTitle: store.localized(.tagColor),
             confirmTitle: store.localized(.addTag),
-            cancelTitle: store.localized(.cancel)
+            cancelTitle: store.localized(.cancel),
+            initialColorHex: store.suggestedTagColorHex()
         ) else {
             return
         }
 
-        if let tag = store.createTag(named: name) {
+        if let tag = store.createTag(named: details.name, colorHex: details.colorHex) {
             store.selectedQuickPanelTagID = tag.id
         }
+    }
+
+    private func editQuickPanelTag(_ tag: ClipboardTag) {
+        let currentTag = store.tags.first(where: { $0.id == tag.id }) ?? tag
+        guard let details = TagPrompt.requestTagDetails(
+            title: store.localized(.editTag),
+            namePlaceholder: store.localized(.tagName),
+            colorTitle: store.localized(.tagColor),
+            confirmTitle: store.localized(.save),
+            cancelTitle: store.localized(.cancel),
+            initialName: currentTag.name,
+            initialColorHex: currentTag.colorHex
+        ) else {
+            return
+        }
+
+        store.renameTag(currentTag, to: details.name)
+        store.updateTagColor(currentTag, colorHex: details.colorHex)
     }
 
 }
@@ -355,12 +382,14 @@ private struct QuickPanelCard: View {
     }
 
     private func createAndAssignTag() {
-        guard let name = TagPrompt.requestName(
+        guard let details = TagPrompt.requestTagDetails(
             title: store.localized(.newTag),
-            placeholder: store.localized(.tagName),
+            namePlaceholder: store.localized(.tagName),
+            colorTitle: store.localized(.tagColor),
             confirmTitle: store.localized(.addTag),
-            cancelTitle: store.localized(.cancel)
-        ), let tag = store.createTag(named: name) else {
+            cancelTitle: store.localized(.cancel),
+            initialColorHex: store.suggestedTagColorHex()
+        ), let tag = store.createTag(named: details.name, colorHex: details.colorHex) else {
             return
         }
 

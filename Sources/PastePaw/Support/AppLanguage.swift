@@ -83,8 +83,10 @@ enum LocalizedText {
         case tags
         case allTags
         case newTag
+        case editTag
         case addTag
         case tagName
+        case tagColor
         case renameClipping
         case clippingTitle
         case assignTags
@@ -154,8 +156,10 @@ enum LocalizedText {
         .tags: "Tags",
         .allTags: "All",
         .newTag: "New Tag",
+        .editTag: "Edit Tag",
         .addTag: "Add Tag",
         .tagName: "Tag name",
+        .tagColor: "Tag color",
         .renameClipping: "Rename clipping",
         .clippingTitle: "Clipping title",
         .assignTags: "Assign Tags",
@@ -225,8 +229,10 @@ enum LocalizedText {
         .tags: "标签",
         .allTags: "全部",
         .newTag: "新标签",
+        .editTag: "编辑标签",
         .addTag: "添加标签",
         .tagName: "标签名称",
+        .tagColor: "标签颜色",
         .renameClipping: "重命名剪贴",
         .clippingTitle: "剪贴标题",
         .assignTags: "分配标签",
