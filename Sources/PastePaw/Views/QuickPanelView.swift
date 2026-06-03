@@ -4,12 +4,27 @@ import SwiftUI
 
 struct QuickPanelView: View {
     @EnvironmentObject private var store: ClipboardHistoryStore
+    @State private var activeEditor: QuickPanelEditor?
+    @State private var tagNameDraft = ""
+    @State private var tagColorDraft = ClipboardTag.defaultColorHex
+    @State private var itemTitleDraft = ""
     let onHoverChanged: (Bool) -> Void
+    let onEditingChanged: (Bool) -> Void
     let onClose: () -> Void
 
     var body: some View {
-        expandedBody
+        ZStack {
+            expandedBody
+
+            if let activeEditor {
+                editorOverlay(for: activeEditor)
+                    .transition(.opacity.combined(with: .scale(scale: 0.98)))
+            }
+        }
         .onHover(perform: onHoverChanged)
+        .onChange(of: activeEditor != nil) { _, isEditing in
+            onEditingChanged(isEditing)
+        }
     }
 
     private var expandedBody: some View {
@@ -23,7 +38,11 @@ struct QuickPanelView: View {
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 12) {
                         ForEach(store.recentQuickPanelItems) { item in
-                            QuickPanelCard(item: item)
+                            QuickPanelCard(
+                                item: item,
+                                onRenameTitle: openItemTitleEditor,
+                                onCreateAndAssignTag: openCreateTagEditor
+                            )
                                 .environmentObject(store)
                         }
                     }
@@ -109,6 +128,12 @@ struct QuickPanelView: View {
                                 } label: {
                                     Label(store.localized(.editTag), systemImage: "pencil")
                                 }
+
+                                Button(role: .destructive) {
+                                    store.deleteTag(tag)
+                                } label: {
+                                    Label(store.localized(.delete), systemImage: "trash")
+                                }
                             }
                         }
 
@@ -177,45 +202,144 @@ struct QuickPanelView: View {
     }
 
     private func createQuickPanelTag() {
-        guard let details = TagPrompt.requestTagDetails(
-            title: store.localized(.newTag),
-            namePlaceholder: store.localized(.tagName),
-            colorTitle: store.localized(.tagColor),
-            confirmTitle: store.localized(.addTag),
-            cancelTitle: store.localized(.cancel),
-            initialColorHex: store.suggestedTagColorHex()
-        ) else {
-            return
-        }
-
-        if let tag = store.createTag(named: details.name, colorHex: details.colorHex) {
-            store.selectedQuickPanelTagID = tag.id
-        }
+        openCreateTagEditor(assigningTo: nil)
     }
 
     private func editQuickPanelTag(_ tag: ClipboardTag) {
         let currentTag = store.tags.first(where: { $0.id == tag.id }) ?? tag
-        guard let details = TagPrompt.requestTagDetails(
-            title: store.localized(.editTag),
-            namePlaceholder: store.localized(.tagName),
-            colorTitle: store.localized(.tagColor),
-            confirmTitle: store.localized(.save),
-            cancelTitle: store.localized(.cancel),
-            initialName: currentTag.name,
-            initialColorHex: currentTag.colorHex
-        ) else {
+        tagNameDraft = currentTag.name
+        tagColorDraft = currentTag.colorHex
+        activeEditor = .editTag(currentTag.id)
+    }
+
+    private func openCreateTagEditor(assigningTo item: ClipboardHistoryItem?) {
+        tagNameDraft = ""
+        tagColorDraft = store.suggestedTagColorHex()
+        activeEditor = .createTag(assignToItemID: item?.id)
+    }
+
+    private func openItemTitleEditor(_ item: ClipboardHistoryItem) {
+        itemTitleDraft = item.customTitle ?? defaultTitle(for: item)
+        activeEditor = .renameItem(item.id)
+    }
+
+    private func closeEditor() {
+        activeEditor = nil
+    }
+
+    @ViewBuilder
+    private func editorOverlay(for editor: QuickPanelEditor) -> some View {
+        ZStack {
+            Rectangle()
+                .fill(.black.opacity(0.12))
+                .background(.ultraThinMaterial.opacity(0.35))
+                .clipShape(RoundedRectangle(cornerRadius: 22))
+                .onTapGesture(perform: closeEditor)
+
+            switch editor {
+            case .createTag:
+                QuickPanelTagEditorSheet(
+                    title: store.localized(.newTag),
+                    confirmTitle: store.localized(.addTag),
+                    name: $tagNameDraft,
+                    colorHex: $tagColorDraft,
+                    showsDelete: false,
+                    onSave: saveActiveEditor,
+                    onDelete: nil,
+                    onCancel: closeEditor
+                )
+                .environmentObject(store)
+            case .editTag(let tagID):
+                QuickPanelTagEditorSheet(
+                    title: store.localized(.editTag),
+                    confirmTitle: store.localized(.save),
+                    name: $tagNameDraft,
+                    colorHex: $tagColorDraft,
+                    showsDelete: true,
+                    onSave: saveActiveEditor,
+                    onDelete: { deleteTag(tagID: tagID) },
+                    onCancel: closeEditor
+                )
+                .environmentObject(store)
+            case .renameItem:
+                QuickPanelTitleEditorSheet(
+                    title: store.localized(.renameClipping),
+                    clippingTitle: $itemTitleDraft,
+                    onSave: saveActiveEditor,
+                    onCancel: closeEditor
+                )
+                .environmentObject(store)
+            }
+        }
+        .padding(.horizontal, 18)
+        .padding(.vertical, 10)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .zIndex(10)
+    }
+
+    private func saveActiveEditor() {
+        guard let activeEditor else {
             return
         }
 
-        store.renameTag(currentTag, to: details.name)
-        store.updateTagColor(currentTag, colorHex: details.colorHex)
+        switch activeEditor {
+        case .createTag(let itemID):
+            guard let tag = store.createTag(named: tagNameDraft, colorHex: tagColorDraft) else {
+                return
+            }
+
+            if let itemID,
+               let item = store.items.first(where: { $0.id == itemID }),
+               !item.tagIDs.contains(tag.id) {
+                store.toggleTag(tag, for: item)
+            }
+            store.selectedQuickPanelTagID = tag.id
+            closeEditor()
+        case .editTag(let tagID):
+            guard let tag = store.tags.first(where: { $0.id == tagID }) else {
+                closeEditor()
+                return
+            }
+
+            store.renameTag(tag, to: tagNameDraft)
+            store.updateTagColor(tag, colorHex: tagColorDraft)
+            closeEditor()
+        case .renameItem(let itemID):
+            guard let item = store.items.first(where: { $0.id == itemID }) else {
+                closeEditor()
+                return
+            }
+
+            store.renameTitle(for: item, to: itemTitleDraft)
+            closeEditor()
+        }
     }
 
+    private func deleteTag(tagID: UUID) {
+        guard let tag = store.tags.first(where: { $0.id == tagID }) else {
+            closeEditor()
+            return
+        }
+
+        store.deleteTag(tag)
+        closeEditor()
+    }
+
+    private func defaultTitle(for item: ClipboardHistoryItem) -> String {
+        switch item.content {
+        case .text:
+            return store.localized(.textClipping)
+        case .image:
+            return store.localized(.image)
+        }
+    }
 }
 
 private struct QuickPanelCard: View {
     @EnvironmentObject private var store: ClipboardHistoryStore
     let item: ClipboardHistoryItem
+    let onRenameTitle: (ClipboardHistoryItem) -> Void
+    let onCreateAndAssignTag: (ClipboardHistoryItem) -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -270,7 +394,9 @@ private struct QuickPanelCard: View {
             .truncationMode(.tail)
             .frame(maxWidth: 78, alignment: .leading)
             .contentShape(Rectangle())
-            .onTapGesture(count: 2, perform: renameItemTitle)
+            .onTapGesture(count: 2) {
+                onRenameTitle(item)
+            }
     }
 
     private var copyArea: some View {
@@ -315,7 +441,7 @@ private struct QuickPanelCard: View {
         }
 
         Button {
-            createAndAssignTag()
+            onCreateAndAssignTag(item)
         } label: {
             Label(store.localized(.newTag), systemImage: "plus")
         }
@@ -381,36 +507,165 @@ private struct QuickPanelCard: View {
         }
     }
 
-    private func createAndAssignTag() {
-        guard let details = TagPrompt.requestTagDetails(
-            title: store.localized(.newTag),
-            namePlaceholder: store.localized(.tagName),
-            colorTitle: store.localized(.tagColor),
-            confirmTitle: store.localized(.addTag),
-            cancelTitle: store.localized(.cancel),
-            initialColorHex: store.suggestedTagColorHex()
-        ), let tag = store.createTag(named: details.name, colorHex: details.colorHex) else {
-            return
-        }
+}
 
-        if !item.tagIDs.contains(tag.id) {
-            store.toggleTag(tag, for: item)
-        }
-        store.selectedQuickPanelTagID = tag.id
+private enum QuickPanelEditor: Equatable {
+    case createTag(assignToItemID: UUID?)
+    case editTag(UUID)
+    case renameItem(UUID)
+}
+
+private struct QuickPanelTagEditorSheet: View {
+    @EnvironmentObject private var store: ClipboardHistoryStore
+    let title: String
+    let confirmTitle: String
+    @Binding var name: String
+    @Binding var colorHex: String
+    let showsDelete: Bool
+    let onSave: () -> Void
+    let onDelete: (() -> Void)?
+    let onCancel: () -> Void
+    @FocusState private var isNameFocused: Bool
+
+    private var canSave: Bool {
+        !ClipboardTagRules.normalizedName(name).isEmpty
     }
 
-    private func renameItemTitle() {
-        guard let newTitle = TagPrompt.requestName(
-            title: store.localized(.renameClipping),
-            placeholder: store.localized(.clippingTitle),
-            confirmTitle: store.localized(.save),
-            cancelTitle: store.localized(.cancel),
-            initialValue: item.customTitle ?? defaultTitle
-        ) else {
-            return
-        }
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Label(title, systemImage: "tag.fill")
+                    .font(.system(size: 14, weight: .bold, design: .rounded))
+                    .foregroundStyle(PastePawTheme.cocoa)
 
-        store.renameTitle(for: item, to: newTitle)
+                Spacer()
+
+                Button(action: onCancel) {
+                    Image(systemName: "xmark")
+                        .font(.system(size: 11, weight: .bold))
+                        .frame(width: 22, height: 22)
+                }
+                .buttonStyle(.plain)
+                .foregroundStyle(PastePawTheme.coffee)
+            }
+
+            TextField(store.localized(.tagName), text: $name)
+                .textFieldStyle(.roundedBorder)
+                .focused($isNameFocused)
+                .onSubmit {
+                    if canSave {
+                        onSave()
+                    }
+                }
+
+            VStack(alignment: .leading, spacing: 8) {
+                Text(store.localized(.tagColor))
+                    .font(.system(size: 11, weight: .bold, design: .rounded))
+                    .foregroundStyle(PastePawTheme.coffee.opacity(0.72))
+
+                HStack(spacing: 8) {
+                    ForEach(ClipboardTag.colorOptions) { option in
+                        Button {
+                            colorHex = option.hex
+                        } label: {
+                            Circle()
+                                .fill(TagColorSwatch.color(hex: option.hex))
+                                .frame(width: 24, height: 24)
+                                .overlay(
+                                    Circle()
+                                        .stroke(colorHex == option.hex ? PastePawTheme.cocoa : .white.opacity(0.72), lineWidth: colorHex == option.hex ? 2 : 1)
+                                )
+                        }
+                        .buttonStyle(.plain)
+                        .help(option.name)
+                    }
+                }
+            }
+
+            HStack(spacing: 10) {
+                if showsDelete, let onDelete {
+                    Button(role: .destructive, action: onDelete) {
+                        Label(store.localized(.delete), systemImage: "trash")
+                    }
+                    .buttonStyle(.borderless)
+                }
+
+                Spacer()
+
+                Button(store.localized(.cancel), action: onCancel)
+                    .buttonStyle(.borderless)
+
+                Button(confirmTitle, action: onSave)
+                    .buttonStyle(.borderedProminent)
+                    .disabled(!canSave)
+            }
+        }
+        .padding(14)
+        .frame(width: 340)
+        .background(.white.opacity(0.94), in: RoundedRectangle(cornerRadius: 10))
+        .overlay(
+            RoundedRectangle(cornerRadius: 10)
+                .stroke(PastePawTheme.warmCream, lineWidth: 1)
+        )
+        .shadow(color: .black.opacity(0.16), radius: 16, y: 8)
+        .onAppear {
+            isNameFocused = true
+        }
+    }
+}
+
+private struct QuickPanelTitleEditorSheet: View {
+    @EnvironmentObject private var store: ClipboardHistoryStore
+    let title: String
+    @Binding var clippingTitle: String
+    let onSave: () -> Void
+    let onCancel: () -> Void
+    @FocusState private var isTitleFocused: Bool
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Label(title, systemImage: "text.alignleft")
+                    .font(.system(size: 14, weight: .bold, design: .rounded))
+                    .foregroundStyle(PastePawTheme.cocoa)
+
+                Spacer()
+
+                Button(action: onCancel) {
+                    Image(systemName: "xmark")
+                        .font(.system(size: 11, weight: .bold))
+                        .frame(width: 22, height: 22)
+                }
+                .buttonStyle(.plain)
+                .foregroundStyle(PastePawTheme.coffee)
+            }
+
+            TextField(store.localized(.clippingTitle), text: $clippingTitle)
+                .textFieldStyle(.roundedBorder)
+                .focused($isTitleFocused)
+                .onSubmit(onSave)
+
+            HStack(spacing: 10) {
+                Spacer()
+
+                Button(store.localized(.cancel), action: onCancel)
+                    .buttonStyle(.borderless)
+
+                Button(store.localized(.save), action: onSave)
+                    .buttonStyle(.borderedProminent)
+            }
+        }
+        .padding(14)
+        .frame(width: 320)
+        .background(.white.opacity(0.94), in: RoundedRectangle(cornerRadius: 10))
+        .overlay(
+            RoundedRectangle(cornerRadius: 10)
+                .stroke(PastePawTheme.warmCream, lineWidth: 1)
+        )
+        .shadow(color: .black.opacity(0.16), radius: 16, y: 8)
+        .onAppear {
+            isTitleFocused = true
+        }
     }
 }
 

@@ -14,6 +14,19 @@ struct QuickPanelScrollMappingTests {
         #expect(offset == 168)
     }
 
+    @Test func verticalWheelDirectionCanBeInverted() {
+        let offset = HorizontalWheelScrollMapper.mappedOffset(
+            currentOffset: 120,
+            viewportWidth: 300,
+            contentWidth: 900,
+            horizontalDelta: 0,
+            verticalDelta: 48,
+            wheelScrollDirection: .wheelUpMovesLeft
+        )
+
+        #expect(offset == 72)
+    }
+
     @Test func nonPreciseMouseWheelDeltaUsesLargerHorizontalStep() {
         let offset = HorizontalWheelScrollMapper.mappedOffset(
             currentOffset: 120,

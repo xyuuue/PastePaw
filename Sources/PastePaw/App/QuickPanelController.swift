@@ -32,9 +32,12 @@ final class QuickPanelController {
 
         let panel = panel ?? makePanel()
         self.panel = panel
+        if let quickPanel = panel as? QuickPanelWindow {
+            quickPanel.wheelScrollDirection = store.quickPanelWheelScrollDirection
+        }
         refreshContent()
         movePanel(animated: false)
-        panel.orderFrontRegardless()
+        panel.makeKeyAndOrderFront(nil)
     }
 
     func hidePanel() {
@@ -77,6 +80,13 @@ final class QuickPanelController {
             rootView: QuickPanelView(
                 onHoverChanged: { [weak self] isHovering in
                     self?.handleHoverChanged(isHovering)
+                },
+                onEditingChanged: { [weak self] isEditing in
+                    if isEditing {
+                        self?.beginInteractiveSession()
+                    } else {
+                        self?.endInteractiveSession()
+                    }
                 },
                 onClose: { [weak self] in
                     self?.hidePanel()
@@ -161,8 +171,19 @@ final class QuickPanelController {
 
 @MainActor
 private final class QuickPanelWindow: NSPanel {
+    var wheelScrollDirection: QuickPanelWheelScrollDirection = .defaultDirection
+
+    override var canBecomeKey: Bool {
+        true
+    }
+
+    override var canBecomeMain: Bool {
+        false
+    }
+
     override func sendEvent(_ event: NSEvent) {
-        if event.type == .scrollWheel, QuickPanelHorizontalScrollBridge.handle(event, in: self) {
+        if event.type == .scrollWheel,
+           QuickPanelHorizontalScrollBridge.handle(event, in: self, wheelScrollDirection: wheelScrollDirection) {
             return
         }
 
@@ -172,7 +193,11 @@ private final class QuickPanelWindow: NSPanel {
 
 @MainActor
 private enum QuickPanelHorizontalScrollBridge {
-    static func handle(_ event: NSEvent, in window: NSWindow) -> Bool {
+    static func handle(
+        _ event: NSEvent,
+        in window: NSWindow,
+        wheelScrollDirection: QuickPanelWheelScrollDirection
+    ) -> Bool {
         guard let scrollView = horizontalScrollView(for: event, in: window),
               let documentView = scrollView.documentView else {
             return false
@@ -188,13 +213,22 @@ private enum QuickPanelHorizontalScrollBridge {
             contentWidth: contentWidth,
             horizontalDelta: Double(event.scrollingDeltaX),
             verticalDelta: Double(event.scrollingDeltaY),
-            usesPreciseScrollingDeltas: event.hasPreciseScrollingDeltas
+            usesPreciseScrollingDeltas: event.hasPreciseScrollingDeltas,
+            wheelScrollDirection: wheelScrollDirection
         ) else {
             return false
         }
 
         let targetOrigin = NSPoint(x: mappedOffset, y: scrollView.contentView.bounds.origin.y)
-        scrollView.contentView.scroll(to: targetOrigin)
+        if event.hasPreciseScrollingDeltas {
+            scrollView.contentView.scroll(to: targetOrigin)
+        } else {
+            NSAnimationContext.runAnimationGroup { context in
+                context.duration = 0.08
+                context.allowsImplicitAnimation = true
+                scrollView.contentView.animator().setBoundsOrigin(targetOrigin)
+            }
+        }
         scrollView.reflectScrolledClipView(scrollView.contentView)
         return true
     }

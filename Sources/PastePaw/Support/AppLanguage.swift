@@ -66,6 +66,10 @@ enum LocalizedText {
         case quickPanelDismissOnMouseExit
         case quickPanelDismissWithShortcut
         case quickPanelDismissalHint
+        case quickPanelWheelDirection
+        case quickPanelWheelUpMovesLeft
+        case quickPanelWheelUpMovesRight
+        case quickPanelWheelDirectionHint
         case quickPanelHistoryItems
         case quickPanelHistoryMaxWarning
         case quickPanelSettingsHint
@@ -139,6 +143,10 @@ enum LocalizedText {
         .quickPanelDismissOnMouseExit: "Mouse leaves",
         .quickPanelDismissWithShortcut: "Shortcut again",
         .quickPanelDismissalHint: "Choose whether the panel closes automatically when the mouse leaves or stays open until you press the shortcut again.",
+        .quickPanelWheelDirection: "Wheel direction",
+        .quickPanelWheelUpMovesLeft: "Up = left",
+        .quickPanelWheelUpMovesRight: "Up = right",
+        .quickPanelWheelDirectionHint: "Choose how vertical mouse-wheel movement maps to horizontal quick-panel scrolling.",
         .quickPanelHistoryItems: "Panel history items",
         .quickPanelHistoryMaxWarning: "Maximum is 50 items.",
         .quickPanelSettingsHint: "Press the shortcut to show the bottom panel. The default shortcut is Option + Space.",
@@ -212,6 +220,10 @@ enum LocalizedText {
         .quickPanelDismissOnMouseExit: "鼠标移开",
         .quickPanelDismissWithShortcut: "再次按快捷键",
         .quickPanelDismissalHint: "可以选择鼠标移开自动关闭，或让浮窗保持打开直到再次按快捷键。",
+        .quickPanelWheelDirection: "滚轮方向",
+        .quickPanelWheelUpMovesLeft: "向上 = 向左",
+        .quickPanelWheelUpMovesRight: "向上 = 向右",
+        .quickPanelWheelDirectionHint: "设置鼠标滚轮上下滑动和快捷浮窗左右滑动的对应关系。",
         .quickPanelHistoryItems: "浮窗历史数量",
         .quickPanelHistoryMaxWarning: "最多 50 个。",
         .quickPanelSettingsHint: "按下快捷键即可打开底部浮窗，默认快捷键是 Option + Space。",

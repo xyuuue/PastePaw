@@ -48,6 +48,11 @@ final class ClipboardHistoryStore: ObservableObject {
             UserDefaults.standard.set(quickPanelDismissalMode.rawValue, forKey: Self.quickPanelDismissalModeKey)
         }
     }
+    @Published var quickPanelWheelScrollDirection: QuickPanelWheelScrollDirection {
+        didSet {
+            UserDefaults.standard.set(quickPanelWheelScrollDirection.rawValue, forKey: Self.quickPanelWheelScrollDirectionKey)
+        }
+    }
     @Published var appLanguage: AppLanguage {
         didSet {
             UserDefaults.standard.set(appLanguage.rawValue, forKey: Self.appLanguageKey)
@@ -63,6 +68,7 @@ final class ClipboardHistoryStore: ObservableObject {
     private static let quickPanelHistoryCountKey = "quickPanelHistoryCount"
     private static let quickPanelShortcutKey = "quickPanelShortcut"
     private static let quickPanelDismissalModeKey = "quickPanelDismissalMode"
+    private static let quickPanelWheelScrollDirectionKey = "quickPanelWheelScrollDirection"
     private static let appLanguageKey = "appLanguage"
 
     private let fileManager: FileManager
@@ -91,6 +97,9 @@ final class ClipboardHistoryStore: ObservableObject {
         let savedQuickPanelDismissalMode = UserDefaults.standard.string(forKey: Self.quickPanelDismissalModeKey)
             .flatMap(QuickPanelDismissalMode.init(rawValue:))
         self.quickPanelDismissalMode = savedQuickPanelDismissalMode ?? .defaultMode
+        let savedQuickPanelWheelScrollDirection = UserDefaults.standard.string(forKey: Self.quickPanelWheelScrollDirectionKey)
+            .flatMap(QuickPanelWheelScrollDirection.init(rawValue:))
+        self.quickPanelWheelScrollDirection = savedQuickPanelWheelScrollDirection ?? .defaultDirection
         let savedLanguage = UserDefaults.standard.string(forKey: Self.appLanguageKey)
             .flatMap(AppLanguage.init(rawValue:))
         self.appLanguage = savedLanguage ?? .english

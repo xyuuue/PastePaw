@@ -84,6 +84,13 @@ struct SettingsView: View {
                 }
                 .pickerStyle(.segmented)
 
+                Picker(store.localized(.quickPanelWheelDirection), selection: $store.quickPanelWheelScrollDirection) {
+                    ForEach(QuickPanelWheelScrollDirection.allCases) { direction in
+                        Text(wheelDirectionTitle(direction)).tag(direction)
+                    }
+                }
+                .pickerStyle(.segmented)
+
                 HStack {
                     Text(store.localized(.quickPanelHistoryItems))
                     Spacer()
@@ -110,6 +117,10 @@ struct SettingsView: View {
                     .foregroundStyle(.secondary)
 
                 Text(store.localized(.quickPanelDismissalHint))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+
+                Text(store.localized(.quickPanelWheelDirectionHint))
                     .font(.caption)
                     .foregroundStyle(.secondary)
             } header: {
@@ -172,6 +183,15 @@ struct SettingsView: View {
             return store.localized(.quickPanelDismissOnMouseExit)
         case .shortcutToggle:
             return store.localized(.quickPanelDismissWithShortcut)
+        }
+    }
+
+    private func wheelDirectionTitle(_ direction: QuickPanelWheelScrollDirection) -> String {
+        switch direction {
+        case .wheelUpMovesRight:
+            return store.localized(.quickPanelWheelUpMovesRight)
+        case .wheelUpMovesLeft:
+            return store.localized(.quickPanelWheelUpMovesLeft)
         }
     }
 }
