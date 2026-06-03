@@ -10,6 +10,7 @@ public struct ClipboardHistoryItem: Identifiable, Codable, Equatable, Sendable {
     public var createdAt: Date
     public var isPinned: Bool
     public var tagIDs: [UUID]
+    public var customTitle: String?
     public var content: Content
 
     public init(
@@ -17,12 +18,14 @@ public struct ClipboardHistoryItem: Identifiable, Codable, Equatable, Sendable {
         createdAt: Date = Date(),
         isPinned: Bool = false,
         tagIDs: [UUID] = [],
+        customTitle: String? = nil,
         content: Content
     ) {
         self.id = id
         self.createdAt = createdAt
         self.isPinned = isPinned
         self.tagIDs = tagIDs
+        self.customTitle = ClipboardItemTitleRules.normalizedCustomTitle(customTitle ?? "")
         self.content = content
     }
 
@@ -31,6 +34,7 @@ public struct ClipboardHistoryItem: Identifiable, Codable, Equatable, Sendable {
         case createdAt
         case isPinned
         case tagIDs
+        case customTitle
         case content
     }
 
@@ -40,6 +44,7 @@ public struct ClipboardHistoryItem: Identifiable, Codable, Equatable, Sendable {
         createdAt = try container.decode(Date.self, forKey: .createdAt)
         isPinned = try container.decode(Bool.self, forKey: .isPinned)
         tagIDs = try container.decodeIfPresent([UUID].self, forKey: .tagIDs) ?? []
+        customTitle = ClipboardItemTitleRules.normalizedCustomTitle(try container.decodeIfPresent(String.self, forKey: .customTitle) ?? "")
         content = try container.decode(Content.self, forKey: .content)
     }
 }

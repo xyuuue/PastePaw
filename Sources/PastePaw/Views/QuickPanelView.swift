@@ -4,9 +4,6 @@ import SwiftUI
 
 struct QuickPanelView: View {
     @EnvironmentObject private var store: ClipboardHistoryStore
-    @State private var isEditingTitle = false
-    @State private var titleDraft = ""
-    @FocusState private var titleFieldFocused: Bool
     let onHoverChanged: (Bool) -> Void
     let onClose: () -> Void
 
@@ -46,7 +43,9 @@ struct QuickPanelView: View {
             CatMascotView(size: 42)
 
             VStack(alignment: .leading, spacing: 2) {
-                titleEditor
+                Text(store.localized(.quickPanelTitle))
+                    .font(.system(size: 18, weight: .bold, design: .rounded))
+                    .foregroundStyle(PastePawTheme.cocoa)
 
                 Text(store.localized(quickPanelSubtitleKey))
                     .font(.caption)
@@ -77,44 +76,6 @@ struct QuickPanelView: View {
             .help(store.localized(.close))
         }
         .padding(.horizontal, 18)
-    }
-
-    @ViewBuilder
-    private var titleEditor: some View {
-        if isEditingTitle {
-            TextField(store.localized(.quickPanelTitle), text: $titleDraft)
-                .textFieldStyle(.plain)
-                .font(.system(size: 18, weight: .bold, design: .rounded))
-                .foregroundStyle(PastePawTheme.cocoa)
-                .lineLimit(1)
-                .focused($titleFieldFocused)
-                .frame(maxWidth: 300, alignment: .leading)
-                .padding(.horizontal, 6)
-                .padding(.vertical, 2)
-                .background(.white.opacity(0.62), in: RoundedRectangle(cornerRadius: 6))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 6)
-                        .stroke(PastePawTheme.caramel.opacity(0.38), lineWidth: 1)
-                )
-                .onSubmit(commitTitleEditing)
-                .onAppear {
-                    titleFieldFocused = true
-                }
-                .onChange(of: titleFieldFocused) { _, isFocused in
-                    if !isFocused {
-                        commitTitleEditing()
-                    }
-                }
-        } else {
-            Text(store.quickPanelTitle)
-                .font(.system(size: 18, weight: .bold, design: .rounded))
-                .foregroundStyle(PastePawTheme.cocoa)
-                .lineLimit(1)
-                .truncationMode(.tail)
-                .frame(maxWidth: 300, alignment: .leading)
-                .contentShape(Rectangle())
-                .onTapGesture(count: 2, perform: beginTitleEditing)
-        }
     }
 
     private var tagSelector: some View {
@@ -223,21 +184,6 @@ struct QuickPanelView: View {
         }
     }
 
-    private func beginTitleEditing() {
-        titleDraft = store.quickPanelCustomTitle ?? store.localized(.quickPanelTitle)
-        isEditingTitle = true
-        titleFieldFocused = true
-    }
-
-    private func commitTitleEditing() {
-        guard isEditingTitle else {
-            return
-        }
-
-        store.renameQuickPanelTitle(to: titleDraft)
-        isEditingTitle = false
-        titleFieldFocused = false
-    }
 }
 
 private struct QuickPanelCard: View {
@@ -247,10 +193,7 @@ private struct QuickPanelCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 7) {
-                Label(title, systemImage: symbolName)
-                    .font(.system(size: 12, weight: .bold, design: .rounded))
-                    .foregroundStyle(.white)
-                    .lineLimit(1)
+                itemTitleEditor
 
                 Spacer()
 
@@ -289,6 +232,18 @@ private struct QuickPanelCard: View {
                 .stroke(item.isPinned ? PastePawTheme.caramel : PastePawTheme.warmCream, lineWidth: item.isPinned ? 1.4 : 1)
         )
         .help(store.localized(.copyHelp))
+    }
+
+    @ViewBuilder
+    private var itemTitleEditor: some View {
+        Label(title, systemImage: symbolName)
+            .font(.system(size: 12, weight: .bold, design: .rounded))
+            .foregroundStyle(.white)
+            .lineLimit(1)
+            .truncationMode(.tail)
+            .frame(maxWidth: 78, alignment: .leading)
+            .contentShape(Rectangle())
+            .onTapGesture(count: 2, perform: renameItemTitle)
     }
 
     private var copyArea: some View {
@@ -349,6 +304,10 @@ private struct QuickPanelCard: View {
     }
 
     private var title: String {
+        item.customTitle ?? defaultTitle
+    }
+
+    private var defaultTitle: String {
         switch item.content {
         case .text:
             store.localized(.textClipping)
@@ -409,6 +368,20 @@ private struct QuickPanelCard: View {
             store.toggleTag(tag, for: item)
         }
         store.selectedQuickPanelTagID = tag.id
+    }
+
+    private func renameItemTitle() {
+        guard let newTitle = TagPrompt.requestName(
+            title: store.localized(.renameClipping),
+            placeholder: store.localized(.clippingTitle),
+            confirmTitle: store.localized(.save),
+            cancelTitle: store.localized(.cancel),
+            initialValue: item.customTitle ?? defaultTitle
+        ) else {
+            return
+        }
+
+        store.renameTitle(for: item, to: newTitle)
     }
 }
 

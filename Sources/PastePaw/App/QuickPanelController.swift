@@ -7,11 +7,14 @@ final class QuickPanelController {
     private let store: ClipboardHistoryStore
     private var panel: NSPanel?
     private var hideTask: Task<Void, Never>?
+    private var menuTrackingObservers: [NSObjectProtocol] = []
+    private var activeInteractionCount = 0
 
     private let expandedHeight: CGFloat = 292
 
     init(store: ClipboardHistoryStore) {
         self.store = store
+        installMenuTrackingObservers()
     }
 
     func togglePanel() {
@@ -25,6 +28,7 @@ final class QuickPanelController {
 
     func showPanel() {
         store.startMonitoring()
+        activeInteractionCount = 0
 
         let panel = panel ?? makePanel()
         self.panel = panel
@@ -35,6 +39,7 @@ final class QuickPanelController {
 
     func hidePanel() {
         hideTask?.cancel()
+        activeInteractionCount = 0
         panel?.orderOut(nil)
     }
 
@@ -71,16 +76,7 @@ final class QuickPanelController {
         panel?.contentView = NSHostingView(
             rootView: QuickPanelView(
                 onHoverChanged: { [weak self] isHovering in
-                    guard self?.store.quickPanelDismissalMode == .mouseExit else {
-                        self?.cancelScheduledHide()
-                        return
-                    }
-
-                    if isHovering {
-                        self?.cancelScheduledHide()
-                    } else {
-                        self?.hidePanelSoon()
-                    }
+                    self?.handleHoverChanged(isHovering)
                 },
                 onClose: { [weak self] in
                     self?.hidePanel()
@@ -88,6 +84,55 @@ final class QuickPanelController {
             )
             .environmentObject(store)
         )
+    }
+
+    private func installMenuTrackingObservers() {
+        let center = NotificationCenter.default
+        menuTrackingObservers = [
+            center.addObserver(
+                forName: NSMenu.didBeginTrackingNotification,
+                object: nil,
+                queue: .main
+            ) { [weak self] _ in
+                Task { @MainActor [weak self] in
+                    self?.beginInteractiveSession()
+                }
+            },
+            center.addObserver(
+                forName: NSMenu.didEndTrackingNotification,
+                object: nil,
+                queue: .main
+            ) { [weak self] _ in
+                Task { @MainActor [weak self] in
+                    self?.endInteractiveSession()
+                }
+            }
+        ]
+    }
+
+    private func handleHoverChanged(_ isHovering: Bool) {
+        let decision = QuickPanelDismissalRules.decision(
+            isHovering: isHovering,
+            dismissalMode: store.quickPanelDismissalMode,
+            activeInteractionCount: activeInteractionCount
+        )
+
+        switch decision {
+        case .cancelScheduledHide:
+            cancelScheduledHide()
+        case .scheduleHide:
+            hidePanelSoon()
+        }
+    }
+
+    private func beginInteractiveSession() {
+        activeInteractionCount += 1
+        cancelScheduledHide()
+    }
+
+    private func endInteractiveSession() {
+        activeInteractionCount = max(0, activeInteractionCount - 1)
+        cancelScheduledHide()
     }
 
     private func movePanel(animated: Bool) {
@@ -142,7 +187,8 @@ private enum QuickPanelHorizontalScrollBridge {
             viewportWidth: viewportWidth,
             contentWidth: contentWidth,
             horizontalDelta: Double(event.scrollingDeltaX),
-            verticalDelta: Double(event.scrollingDeltaY)
+            verticalDelta: Double(event.scrollingDeltaY),
+            usesPreciseScrollingDeltas: event.hasPreciseScrollingDeltas
         ) else {
             return false
         }

@@ -79,11 +79,14 @@ enum LocalizedText {
         case resetShortcut
         case close
         case cancel
+        case save
         case tags
         case allTags
         case newTag
         case addTag
         case tagName
+        case renameClipping
+        case clippingTitle
         case assignTags
         case noTagsYet
         case taggedRetentionHint
@@ -147,11 +150,14 @@ enum LocalizedText {
         .resetShortcut: "Reset shortcut",
         .close: "Close",
         .cancel: "Cancel",
+        .save: "Save",
         .tags: "Tags",
         .allTags: "All",
         .newTag: "New Tag",
         .addTag: "Add Tag",
         .tagName: "Tag name",
+        .renameClipping: "Rename clipping",
+        .clippingTitle: "Clipping title",
         .assignTags: "Assign Tags",
         .noTagsYet: "No tags yet",
         .taggedRetentionHint: "Tagged items are kept until you remove their tags or delete them.",
@@ -215,11 +221,14 @@ enum LocalizedText {
         .resetShortcut: "重置快捷键",
         .close: "关闭",
         .cancel: "取消",
+        .save: "保存",
         .tags: "标签",
         .allTags: "全部",
         .newTag: "新标签",
         .addTag: "添加标签",
         .tagName: "标签名称",
+        .renameClipping: "重命名剪贴",
+        .clippingTitle: "剪贴标题",
         .assignTags: "分配标签",
         .noTagsYet: "还没有标签",
         .taggedRetentionHint: "带标签的内容会一直保留，直到你移除标签或删除内容。",

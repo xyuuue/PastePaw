@@ -4,7 +4,8 @@ public enum HorizontalWheelScrollMapper {
         viewportWidth: Double,
         contentWidth: Double,
         horizontalDelta: Double,
-        verticalDelta: Double
+        verticalDelta: Double,
+        usesPreciseScrollingDeltas: Bool = true
     ) -> Double? {
         guard contentWidth > viewportWidth else {
             return nil
@@ -14,7 +15,8 @@ public enum HorizontalWheelScrollMapper {
             return nil
         }
 
+        let effectiveVerticalDelta = usesPreciseScrollingDeltas ? verticalDelta : verticalDelta * 44
         let maximumOffset = max(0, contentWidth - viewportWidth)
-        return min(max(currentOffset + verticalDelta, 0), maximumOffset)
+        return min(max(currentOffset + effectiveVerticalDelta, 0), maximumOffset)
     }
 }

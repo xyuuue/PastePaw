@@ -14,6 +14,19 @@ struct QuickPanelScrollMappingTests {
         #expect(offset == 168)
     }
 
+    @Test func nonPreciseMouseWheelDeltaUsesLargerHorizontalStep() {
+        let offset = HorizontalWheelScrollMapper.mappedOffset(
+            currentOffset: 120,
+            viewportWidth: 300,
+            contentWidth: 900,
+            horizontalDelta: 0,
+            verticalDelta: 3,
+            usesPreciseScrollingDeltas: false
+        )
+
+        #expect(offset == 252)
+    }
+
     @Test func verticalWheelDeltaClampsToScrollableBounds() {
         let leadingOffset = HorizontalWheelScrollMapper.mappedOffset(
             currentOffset: 8,

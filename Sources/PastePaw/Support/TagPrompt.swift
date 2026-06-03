@@ -6,10 +6,12 @@ enum TagPrompt {
         title: String,
         placeholder: String,
         confirmTitle: String,
-        cancelTitle: String
+        cancelTitle: String,
+        initialValue: String = ""
     ) -> String? {
         let field = NSTextField(frame: NSRect(x: 0, y: 0, width: 240, height: 24))
         field.placeholderString = placeholder
+        field.stringValue = initialValue
 
         let alert = NSAlert()
         alert.messageText = title
