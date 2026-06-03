@@ -1,4 +1,5 @@
 import AppKit
+import PastePawCore
 import SwiftUI
 
 @MainActor
@@ -50,7 +51,7 @@ final class QuickPanelController {
     }
 
     private func makePanel() -> NSPanel {
-        let panel = NSPanel(
+        let panel = QuickPanelWindow(
             contentRect: NSRect(x: 0, y: 0, width: NSScreen.main?.visibleFrame.width ?? 900, height: expandedHeight),
             styleMask: [.borderless, .nonactivatingPanel],
             backing: .buffered,
@@ -110,5 +111,67 @@ final class QuickPanelController {
         return NSScreen.screens.first { screen in
             screen.frame.contains(mouseLocation)
         } ?? NSScreen.main ?? NSScreen.screens[0]
+    }
+}
+
+@MainActor
+private final class QuickPanelWindow: NSPanel {
+    override func sendEvent(_ event: NSEvent) {
+        if event.type == .scrollWheel, QuickPanelHorizontalScrollBridge.handle(event, in: self) {
+            return
+        }
+
+        super.sendEvent(event)
+    }
+}
+
+@MainActor
+private enum QuickPanelHorizontalScrollBridge {
+    static func handle(_ event: NSEvent, in window: NSWindow) -> Bool {
+        guard let scrollView = horizontalScrollView(for: event, in: window),
+              let documentView = scrollView.documentView else {
+            return false
+        }
+
+        let currentOffset = Double(scrollView.contentView.bounds.origin.x)
+        let viewportWidth = Double(scrollView.contentView.bounds.width)
+        let contentWidth = Double(max(documentView.bounds.width, documentView.frame.width, documentView.fittingSize.width))
+
+        guard let mappedOffset = HorizontalWheelScrollMapper.mappedOffset(
+            currentOffset: currentOffset,
+            viewportWidth: viewportWidth,
+            contentWidth: contentWidth,
+            horizontalDelta: Double(event.scrollingDeltaX),
+            verticalDelta: Double(event.scrollingDeltaY)
+        ) else {
+            return false
+        }
+
+        let targetOrigin = NSPoint(x: mappedOffset, y: scrollView.contentView.bounds.origin.y)
+        scrollView.contentView.scroll(to: targetOrigin)
+        scrollView.reflectScrolledClipView(scrollView.contentView)
+        return true
+    }
+
+    private static func horizontalScrollView(for event: NSEvent, in window: NSWindow) -> NSScrollView? {
+        guard let contentView = window.contentView else {
+            return nil
+        }
+
+        let eventLocation = contentView.convert(event.locationInWindow, from: nil)
+        guard let hitView = contentView.hitTest(eventLocation) else {
+            return nil
+        }
+
+        var currentView: NSView? = hitView
+        while let view = currentView {
+            if let scrollView = view as? NSScrollView {
+                return scrollView
+            }
+
+            currentView = view.superview
+        }
+
+        return nil
     }
 }

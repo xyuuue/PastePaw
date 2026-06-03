@@ -53,6 +53,7 @@ final class ClipboardHistoryStore: ObservableObject {
             UserDefaults.standard.set(appLanguage.rawValue, forKey: Self.appLanguageKey)
         }
     }
+    @Published private(set) var quickPanelCustomTitle: String?
     @Published private(set) var lastError: String?
 
     static let retentionOptions = [1, 3, 5]
@@ -64,6 +65,7 @@ final class ClipboardHistoryStore: ObservableObject {
     private static let quickPanelShortcutKey = "quickPanelShortcut"
     private static let quickPanelDismissalModeKey = "quickPanelDismissalMode"
     private static let appLanguageKey = "appLanguage"
+    private static let quickPanelCustomTitleKey = "quickPanelCustomTitle"
 
     private let fileManager: FileManager
     private let rootDirectory: URL
@@ -94,6 +96,11 @@ final class ClipboardHistoryStore: ObservableObject {
         let savedLanguage = UserDefaults.standard.string(forKey: Self.appLanguageKey)
             .flatMap(AppLanguage.init(rawValue:))
         self.appLanguage = savedLanguage ?? .english
+        if let savedQuickPanelTitle = UserDefaults.standard.string(forKey: Self.quickPanelCustomTitleKey) {
+            self.quickPanelCustomTitle = ClipboardBoardNameRules.normalizedCustomName(savedQuickPanelTitle)
+        } else {
+            self.quickPanelCustomTitle = nil
+        }
 
         loadTags()
         load()
@@ -103,6 +110,10 @@ final class ClipboardHistoryStore: ObservableObject {
 
     func localized(_ key: LocalizedText.Key) -> String {
         LocalizedText.text(key, language: appLanguage)
+    }
+
+    var quickPanelTitle: String {
+        quickPanelCustomTitle ?? localized(.quickPanelTitle)
     }
 
     var filteredItems: [ClipboardHistoryItem] {
@@ -203,6 +214,16 @@ final class ClipboardHistoryStore: ObservableObject {
 
     func resetQuickPanelShortcut() {
         quickPanelShortcut = .defaultQuickPanel
+    }
+
+    func renameQuickPanelTitle(to rawTitle: String) {
+        quickPanelCustomTitle = ClipboardBoardNameRules.normalizedCustomName(rawTitle)
+
+        if let quickPanelCustomTitle {
+            UserDefaults.standard.set(quickPanelCustomTitle, forKey: Self.quickPanelCustomTitleKey)
+        } else {
+            UserDefaults.standard.removeObject(forKey: Self.quickPanelCustomTitleKey)
+        }
     }
 
     func startMonitoring() {

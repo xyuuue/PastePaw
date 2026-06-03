@@ -4,6 +4,9 @@ import SwiftUI
 
 struct QuickPanelView: View {
     @EnvironmentObject private var store: ClipboardHistoryStore
+    @State private var isEditingTitle = false
+    @State private var titleDraft = ""
+    @FocusState private var titleFieldFocused: Bool
     let onHoverChanged: (Bool) -> Void
     let onClose: () -> Void
 
@@ -43,9 +46,7 @@ struct QuickPanelView: View {
             CatMascotView(size: 42)
 
             VStack(alignment: .leading, spacing: 2) {
-                Text(store.localized(.quickPanelTitle))
-                    .font(.system(size: 18, weight: .bold, design: .rounded))
-                    .foregroundStyle(PastePawTheme.cocoa)
+                titleEditor
 
                 Text(store.localized(quickPanelSubtitleKey))
                     .font(.caption)
@@ -76,6 +77,44 @@ struct QuickPanelView: View {
             .help(store.localized(.close))
         }
         .padding(.horizontal, 18)
+    }
+
+    @ViewBuilder
+    private var titleEditor: some View {
+        if isEditingTitle {
+            TextField(store.localized(.quickPanelTitle), text: $titleDraft)
+                .textFieldStyle(.plain)
+                .font(.system(size: 18, weight: .bold, design: .rounded))
+                .foregroundStyle(PastePawTheme.cocoa)
+                .lineLimit(1)
+                .focused($titleFieldFocused)
+                .frame(maxWidth: 300, alignment: .leading)
+                .padding(.horizontal, 6)
+                .padding(.vertical, 2)
+                .background(.white.opacity(0.62), in: RoundedRectangle(cornerRadius: 6))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 6)
+                        .stroke(PastePawTheme.caramel.opacity(0.38), lineWidth: 1)
+                )
+                .onSubmit(commitTitleEditing)
+                .onAppear {
+                    titleFieldFocused = true
+                }
+                .onChange(of: titleFieldFocused) { _, isFocused in
+                    if !isFocused {
+                        commitTitleEditing()
+                    }
+                }
+        } else {
+            Text(store.quickPanelTitle)
+                .font(.system(size: 18, weight: .bold, design: .rounded))
+                .foregroundStyle(PastePawTheme.cocoa)
+                .lineLimit(1)
+                .truncationMode(.tail)
+                .frame(maxWidth: 300, alignment: .leading)
+                .contentShape(Rectangle())
+                .onTapGesture(count: 2, perform: beginTitleEditing)
+        }
     }
 
     private var tagSelector: some View {
@@ -182,6 +221,22 @@ struct QuickPanelView: View {
         if let tag = store.createTag(named: name) {
             store.selectedQuickPanelTagID = tag.id
         }
+    }
+
+    private func beginTitleEditing() {
+        titleDraft = store.quickPanelCustomTitle ?? store.localized(.quickPanelTitle)
+        isEditingTitle = true
+        titleFieldFocused = true
+    }
+
+    private func commitTitleEditing() {
+        guard isEditingTitle else {
+            return
+        }
+
+        store.renameQuickPanelTitle(to: titleDraft)
+        isEditingTitle = false
+        titleFieldFocused = false
     }
 }
 
