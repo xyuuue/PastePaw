@@ -2,7 +2,7 @@ import Testing
 @testable import PastePawCore
 
 struct QuickPanelScrollMappingTests {
-    @Test func verticalWheelDeltaMovesHorizontalOffset() {
+    @Test func preciseVerticalWheelDeltaMovesHorizontalOffsetWithResponsiveMultiplier() {
         let offset = HorizontalWheelScrollMapper.mappedOffset(
             currentOffset: 120,
             viewportWidth: 300,
@@ -11,7 +11,7 @@ struct QuickPanelScrollMappingTests {
             verticalDelta: 48
         )
 
-        #expect(offset == 168)
+        #expect(offset == 216)
     }
 
     @Test func verticalWheelDirectionCanBeInverted() {
@@ -24,7 +24,7 @@ struct QuickPanelScrollMappingTests {
             wheelScrollDirection: .wheelUpMovesLeft
         )
 
-        #expect(offset == 72)
+        #expect(offset == 24)
     }
 
     @Test func nonPreciseMouseWheelDeltaUsesLargerHorizontalStep() {

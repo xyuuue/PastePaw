@@ -172,6 +172,7 @@ final class QuickPanelController {
 @MainActor
 private final class QuickPanelWindow: NSPanel {
     var wheelScrollDirection: QuickPanelWheelScrollDirection = .defaultDirection
+    private var pressDragScrollSession: QuickPanelPressDragScrollBridge.Session?
 
     override var canBecomeKey: Bool {
         true
@@ -182,6 +183,10 @@ private final class QuickPanelWindow: NSPanel {
     }
 
     override func sendEvent(_ event: NSEvent) {
+        if QuickPanelPressDragScrollBridge.handle(event, in: self, session: &pressDragScrollSession) {
+            return
+        }
+
         if event.type == .scrollWheel,
            QuickPanelHorizontalScrollBridge.handle(event, in: self, wheelScrollDirection: wheelScrollDirection) {
             return
@@ -192,25 +197,107 @@ private final class QuickPanelWindow: NSPanel {
 }
 
 @MainActor
+private enum QuickPanelPressDragScrollBridge {
+    final class Session {
+        weak var scrollView: NSScrollView?
+        let startLocationInWindow: NSPoint
+        let startOffset: Double
+        var isActive = false
+
+        init(scrollView: NSScrollView, startLocationInWindow: NSPoint, startOffset: Double) {
+            self.scrollView = scrollView
+            self.startLocationInWindow = startLocationInWindow
+            self.startOffset = startOffset
+        }
+    }
+
+    static func handle(_ event: NSEvent, in window: NSWindow, session: inout Session?) -> Bool {
+        switch event.type {
+        case .leftMouseDown:
+            startSession(for: event, in: window, session: &session)
+            return false
+        case .leftMouseDragged:
+            return handleDrag(event, session: &session)
+        case .leftMouseUp:
+            let wasActive = session?.isActive ?? false
+            session = nil
+            return wasActive
+        default:
+            return false
+        }
+    }
+
+    private static func startSession(for event: NSEvent, in window: NSWindow, session: inout Session?) {
+        guard let scrollView = QuickPanelScrollViewResolver.contentHorizontalScrollView(containing: event, in: window),
+              let metrics = QuickPanelScrollMetrics.metrics(for: scrollView),
+              metrics.contentWidth > metrics.viewportWidth else {
+            session = nil
+            return
+        }
+
+        session = Session(
+            scrollView: scrollView,
+            startLocationInWindow: event.locationInWindow,
+            startOffset: Double(scrollView.contentView.bounds.origin.x)
+        )
+    }
+
+    private static func handleDrag(_ event: NSEvent, session: inout Session?) -> Bool {
+        guard let dragSession = session else {
+            return false
+        }
+
+        guard let scrollView = dragSession.scrollView,
+              let metrics = QuickPanelScrollMetrics.metrics(for: scrollView) else {
+            session = nil
+            return false
+        }
+
+        let horizontalTranslation = Double(event.locationInWindow.x - dragSession.startLocationInWindow.x)
+        let verticalTranslation = Double(event.locationInWindow.y - dragSession.startLocationInWindow.y)
+
+        if !dragSession.isActive {
+            dragSession.isActive = HorizontalPressDragScrollMapper.shouldActivate(
+                horizontalTranslation: horizontalTranslation,
+                verticalTranslation: verticalTranslation
+            )
+
+            guard dragSession.isActive else {
+                return false
+            }
+        }
+
+        guard let mappedOffset = HorizontalPressDragScrollMapper.mappedOffset(
+            currentOffset: dragSession.startOffset,
+            viewportWidth: metrics.viewportWidth,
+            contentWidth: metrics.contentWidth,
+            dragTranslationX: horizontalTranslation
+        ) else {
+            return false
+        }
+
+        QuickPanelScrollOffsetApplier.apply(horizontalOffset: mappedOffset, to: scrollView, animated: false)
+        return true
+    }
+}
+
+@MainActor
 private enum QuickPanelHorizontalScrollBridge {
     static func handle(
         _ event: NSEvent,
         in window: NSWindow,
         wheelScrollDirection: QuickPanelWheelScrollDirection
     ) -> Bool {
-        guard let scrollView = horizontalScrollView(for: event, in: window),
-              let documentView = scrollView.documentView else {
+        guard let scrollView = QuickPanelScrollViewResolver.contentHorizontalScrollView(in: window),
+              let metrics = QuickPanelScrollMetrics.metrics(for: scrollView) else {
             return false
         }
 
         let currentOffset = Double(scrollView.contentView.bounds.origin.x)
-        let viewportWidth = Double(scrollView.contentView.bounds.width)
-        let contentWidth = Double(max(documentView.bounds.width, documentView.frame.width, documentView.fittingSize.width))
-
         guard let mappedOffset = HorizontalWheelScrollMapper.mappedOffset(
             currentOffset: currentOffset,
-            viewportWidth: viewportWidth,
-            contentWidth: contentWidth,
+            viewportWidth: metrics.viewportWidth,
+            contentWidth: metrics.contentWidth,
             horizontalDelta: Double(event.scrollingDeltaX),
             verticalDelta: Double(event.scrollingDeltaY),
             usesPreciseScrollingDeltas: event.hasPreciseScrollingDeltas,
@@ -219,39 +306,101 @@ private enum QuickPanelHorizontalScrollBridge {
             return false
         }
 
-        let targetOrigin = NSPoint(x: mappedOffset, y: scrollView.contentView.bounds.origin.y)
-        if event.hasPreciseScrollingDeltas {
-            scrollView.contentView.scroll(to: targetOrigin)
-        } else {
+        QuickPanelScrollOffsetApplier.apply(
+            horizontalOffset: mappedOffset,
+            to: scrollView,
+            animated: !event.hasPreciseScrollingDeltas
+        )
+        return true
+    }
+}
+
+@MainActor
+private enum QuickPanelScrollMetrics {
+    struct Metrics {
+        let viewportWidth: Double
+        let contentWidth: Double
+    }
+
+    static func metrics(for scrollView: NSScrollView) -> Metrics? {
+        guard let documentView = scrollView.documentView else {
+            return nil
+        }
+
+        return Metrics(
+            viewportWidth: Double(scrollView.contentView.bounds.width),
+            contentWidth: Double(max(documentView.bounds.width, documentView.frame.width, documentView.fittingSize.width))
+        )
+    }
+}
+
+@MainActor
+private enum QuickPanelScrollOffsetApplier {
+    static func apply(horizontalOffset: Double, to scrollView: NSScrollView, animated: Bool) {
+        let targetOrigin = NSPoint(x: horizontalOffset, y: scrollView.contentView.bounds.origin.y)
+        if animated {
             NSAnimationContext.runAnimationGroup { context in
                 context.duration = 0.08
                 context.allowsImplicitAnimation = true
                 scrollView.contentView.animator().setBoundsOrigin(targetOrigin)
             }
+        } else {
+            scrollView.contentView.scroll(to: targetOrigin)
         }
         scrollView.reflectScrolledClipView(scrollView.contentView)
-        return true
     }
+}
 
-    private static func horizontalScrollView(for event: NSEvent, in window: NSWindow) -> NSScrollView? {
+@MainActor
+private enum QuickPanelScrollViewResolver {
+    static func contentHorizontalScrollView(in window: NSWindow) -> NSScrollView? {
         guard let contentView = window.contentView else {
             return nil
         }
 
-        let eventLocation = contentView.convert(event.locationInWindow, from: nil)
-        guard let hitView = contentView.hitTest(eventLocation) else {
+        return contentHorizontalScrollView(in: contentView)
+    }
+
+    static func contentHorizontalScrollView(containing event: NSEvent, in window: NSWindow) -> NSScrollView? {
+        guard let contentView = window.contentView else {
             return nil
         }
 
-        var currentView: NSView? = hitView
-        while let view = currentView {
-            if let scrollView = view as? NSScrollView {
-                return scrollView
-            }
-
-            currentView = view.superview
+        guard let contentScrollView = contentHorizontalScrollView(in: contentView) else {
+            return nil
         }
 
-        return nil
+        let eventLocation = contentView.convert(event.locationInWindow, from: nil)
+        let scrollFrame = contentView.convert(contentScrollView.bounds, from: contentScrollView)
+        return scrollFrame.contains(eventLocation) ? contentScrollView : nil
+    }
+
+    private static func contentHorizontalScrollView(in contentView: NSView) -> NSScrollView? {
+        scrollViews(in: contentView)
+            .filter(isHorizontallyScrollable)
+            .max { lhs, rhs in
+                visibleArea(of: lhs) < visibleArea(of: rhs)
+            }
+    }
+
+    private static func visibleArea(of scrollView: NSScrollView) -> CGFloat {
+        scrollView.visibleRect.width * scrollView.visibleRect.height
+    }
+
+    private static func scrollViews(in view: NSView) -> [NSScrollView] {
+        let childScrollViews = view.subviews.flatMap { scrollViews(in: $0) }
+        if let scrollView = view as? NSScrollView {
+            return [scrollView] + childScrollViews
+        }
+
+        return childScrollViews
+    }
+
+    private static func isHorizontallyScrollable(_ scrollView: NSScrollView) -> Bool {
+        guard let metrics = QuickPanelScrollMetrics.metrics(for: scrollView) else {
+            return false
+        }
+
+        return metrics.contentWidth > metrics.viewportWidth
     }
 }

@@ -1,4 +1,7 @@
 public enum HorizontalWheelScrollMapper {
+    public static let preciseScrollMultiplier = 2.0
+    public static let nonPreciseWheelStepMultiplier = 44.0
+
     public static func mappedOffset(
         currentOffset: Double,
         viewportWidth: Double,
@@ -16,7 +19,7 @@ public enum HorizontalWheelScrollMapper {
             return nil
         }
 
-        let wheelStep = usesPreciseScrollingDeltas ? verticalDelta : verticalDelta * 44
+        let wheelStep = verticalDelta * (usesPreciseScrollingDeltas ? Self.preciseScrollMultiplier : Self.nonPreciseWheelStepMultiplier)
         let effectiveVerticalDelta = wheelStep * wheelScrollDirection.verticalDeltaMultiplier
         let maximumOffset = max(0, contentWidth - viewportWidth)
         return min(max(currentOffset + effectiveVerticalDelta, 0), maximumOffset)
