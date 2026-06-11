@@ -126,7 +126,7 @@ final class ClipboardHistoryStore: ObservableObject {
 
     var recentQuickPanelItems: [ClipboardHistoryItem] {
         Array(
-            HistoryRules.orderedItems(items)
+            HistoryRules.orderedItems(items, selectedTagID: selectedQuickPanelTagID)
                 .filter { HistoryRules.matchesTag($0, selectedTagID: selectedQuickPanelTagID) }
                 .prefix(quickPanelHistoryCount)
         )
@@ -193,6 +193,7 @@ final class ClipboardHistoryStore: ObservableObject {
 
         for index in items.indices {
             items[index].tagIDs.removeAll { $0 == tag.id }
+            items[index].tagSortOrders[tag.id] = nil
         }
 
         saveTags()
@@ -206,11 +207,71 @@ final class ClipboardHistoryStore: ObservableObject {
 
         if items[index].tagIDs.contains(tag.id) {
             items[index].tagIDs.removeAll { $0 == tag.id }
+            items[index].tagSortOrders[tag.id] = nil
         } else {
             items[index].tagIDs.append(tag.id)
         }
 
         applyRetentionAndSave()
+    }
+
+    func moveTag(id draggedTagID: UUID, relativeTo targetTagID: UUID, placement: ReorderPlacement) {
+        let reorderedTagIDs = ReorderRules.reorderedIDs(
+            tags.map(\.id),
+            moving: draggedTagID,
+            relativeTo: targetTagID,
+            placement: placement
+        )
+        guard reorderedTagIDs != tags.map(\.id) else {
+            return
+        }
+
+        let tagByID = Dictionary(uniqueKeysWithValues: tags.map { ($0.id, $0) })
+        tags = reorderedTagIDs.compactMap { tagByID[$0] }
+        saveTags()
+    }
+
+    func moveQuickPanelItem(id draggedItemID: UUID, relativeTo targetItemID: UUID, placement: ReorderPlacement) {
+        guard draggedItemID != targetItemID,
+              let selectedQuickPanelTagID,
+              items.contains(where: { $0.id == draggedItemID && $0.tagIDs.contains(selectedQuickPanelTagID) }),
+              items.contains(where: { $0.id == targetItemID && $0.tagIDs.contains(selectedQuickPanelTagID) }) else {
+            return
+        }
+
+        let orderedTaggedItems = Array(HistoryRules.orderedItems(items, selectedTagID: selectedQuickPanelTagID)
+            .filter { HistoryRules.matchesTag($0, selectedTagID: selectedQuickPanelTagID) }
+            .prefix(quickPanelHistoryCount))
+        let reorderedTaggedItemIDs = ReorderRules.reorderedIDs(
+            orderedTaggedItems.map(\.id),
+            moving: draggedItemID,
+            relativeTo: targetItemID,
+            placement: placement
+        )
+        applyQuickPanelItemOrder(reorderedTaggedItemIDs, selectedTagID: selectedQuickPanelTagID)
+    }
+
+    private func applyQuickPanelItemOrder(_ orderedTaggedItemIDs: [UUID], selectedTagID: UUID) {
+        let orderByItemID = Dictionary(
+            uniqueKeysWithValues: orderedTaggedItemIDs.enumerated().map { offset, itemID in
+                (itemID, offset)
+            }
+        )
+
+        var updatedItems = items
+        for index in updatedItems.indices {
+            guard updatedItems[index].tagIDs.contains(selectedTagID) else {
+                updatedItems[index].tagSortOrders[selectedTagID] = nil
+                continue
+            }
+
+            if let order = orderByItemID[updatedItems[index].id] {
+                updatedItems[index].tagSortOrders[selectedTagID] = order
+            }
+        }
+
+        items = updatedItems
+        save()
     }
 
     func resetQuickPanelShortcut() {

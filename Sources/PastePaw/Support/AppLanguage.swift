@@ -85,6 +85,8 @@ enum LocalizedText {
         case close
         case cancel
         case save
+        case reorder
+        case done
         case tags
         case allTags
         case newTag
@@ -163,6 +165,8 @@ enum LocalizedText {
         .close: "Close",
         .cancel: "Cancel",
         .save: "Save",
+        .reorder: "Reorder",
+        .done: "Done",
         .tags: "Tags",
         .allTags: "All",
         .newTag: "New Tag",
@@ -241,6 +245,8 @@ enum LocalizedText {
         .close: "关闭",
         .cancel: "取消",
         .save: "保存",
+        .reorder: "排序",
+        .done: "完成",
         .tags: "标签",
         .allTags: "全部",
         .newTag: "新标签",

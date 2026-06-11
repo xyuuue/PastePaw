@@ -10,6 +10,7 @@ public struct ClipboardHistoryItem: Identifiable, Codable, Equatable, Sendable {
     public var createdAt: Date
     public var isPinned: Bool
     public var tagIDs: [UUID]
+    public var tagSortOrders: [UUID: Int]
     public var customTitle: String?
     public var content: Content
 
@@ -18,6 +19,7 @@ public struct ClipboardHistoryItem: Identifiable, Codable, Equatable, Sendable {
         createdAt: Date = Date(),
         isPinned: Bool = false,
         tagIDs: [UUID] = [],
+        tagSortOrders: [UUID: Int] = [:],
         customTitle: String? = nil,
         content: Content
     ) {
@@ -25,6 +27,7 @@ public struct ClipboardHistoryItem: Identifiable, Codable, Equatable, Sendable {
         self.createdAt = createdAt
         self.isPinned = isPinned
         self.tagIDs = tagIDs
+        self.tagSortOrders = tagSortOrders
         self.customTitle = ClipboardItemTitleRules.normalizedCustomTitle(customTitle ?? "")
         self.content = content
     }
@@ -34,6 +37,7 @@ public struct ClipboardHistoryItem: Identifiable, Codable, Equatable, Sendable {
         case createdAt
         case isPinned
         case tagIDs
+        case tagSortOrders
         case customTitle
         case content
     }
@@ -44,8 +48,32 @@ public struct ClipboardHistoryItem: Identifiable, Codable, Equatable, Sendable {
         createdAt = try container.decode(Date.self, forKey: .createdAt)
         isPinned = try container.decode(Bool.self, forKey: .isPinned)
         tagIDs = try container.decodeIfPresent([UUID].self, forKey: .tagIDs) ?? []
+        let decodedTagSortOrders = try container.decodeIfPresent([String: Int].self, forKey: .tagSortOrders) ?? [:]
+        tagSortOrders = Dictionary(
+            uniqueKeysWithValues: decodedTagSortOrders.compactMap { key, value in
+                guard let tagID = UUID(uuidString: key) else {
+                    return nil
+                }
+
+                return (tagID, value)
+            }
+        )
         customTitle = ClipboardItemTitleRules.normalizedCustomTitle(try container.decodeIfPresent(String.self, forKey: .customTitle) ?? "")
         content = try container.decode(Content.self, forKey: .content)
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(id, forKey: .id)
+        try container.encode(createdAt, forKey: .createdAt)
+        try container.encode(isPinned, forKey: .isPinned)
+        try container.encode(tagIDs, forKey: .tagIDs)
+        try container.encode(
+            Dictionary(uniqueKeysWithValues: tagSortOrders.map { ($0.key.uuidString, $0.value) }),
+            forKey: .tagSortOrders
+        )
+        try container.encodeIfPresent(customTitle, forKey: .customTitle)
+        try container.encode(content, forKey: .content)
     }
 }
 
@@ -107,6 +135,43 @@ public struct ClipboardTagColorOption: Identifiable, Equatable, Sendable {
     }
 }
 
+public enum ReorderPlacement: Sendable {
+    case before
+    case after
+}
+
+public enum ReorderRules {
+    public static func placement(forLocationX locationX: Double, targetWidth: Double) -> ReorderPlacement {
+        locationX <= max(targetWidth, 1) / 2 ? .before : .after
+    }
+
+    public static func reorderedIDs(
+        _ ids: [UUID],
+        moving sourceID: UUID,
+        relativeTo targetID: UUID,
+        placement: ReorderPlacement
+    ) -> [UUID] {
+        guard sourceID != targetID,
+              ids.contains(sourceID),
+              let targetIndex = ids.firstIndex(of: targetID) else {
+            return ids
+        }
+
+        var reorderedIDs = ids.filter { $0 != sourceID }
+        let adjustedTargetIndex = reorderedIDs.firstIndex(of: targetID) ?? targetIndex
+        let insertionIndex: Int
+        switch placement {
+        case .before:
+            insertionIndex = adjustedTargetIndex
+        case .after:
+            insertionIndex = adjustedTargetIndex + 1
+        }
+
+        reorderedIDs.insert(sourceID, at: min(max(insertionIndex, 0), reorderedIDs.count))
+        return reorderedIDs
+    }
+}
+
 public struct ImagePayload: Codable, Equatable, Sendable {
     public var fileName: String
     public var pasteboardType: String
@@ -137,6 +202,35 @@ public enum HistoryRules {
             }
 
             return lhs.createdAt > rhs.createdAt
+        }
+    }
+
+    public static func orderedItems(_ items: [ClipboardHistoryItem], selectedTagID: UUID?) -> [ClipboardHistoryItem] {
+        let defaultOrderedItems = orderedItems(items)
+        guard let selectedTagID else {
+            return defaultOrderedItems
+        }
+
+        let fallbackRankByItemID = Dictionary(
+            uniqueKeysWithValues: defaultOrderedItems.enumerated().map { offset, item in
+                (item.id, offset)
+            }
+        )
+
+        return items.sorted { lhs, rhs in
+            let lhsOrder = lhs.tagSortOrders[selectedTagID]
+            let rhsOrder = rhs.tagSortOrders[selectedTagID]
+
+            switch (lhsOrder, rhsOrder) {
+            case let (lhsOrder?, rhsOrder?) where lhsOrder != rhsOrder:
+                return lhsOrder < rhsOrder
+            case (_?, nil):
+                return true
+            case (nil, _?):
+                return false
+            default:
+                return (fallbackRankByItemID[lhs.id] ?? Int.max) < (fallbackRankByItemID[rhs.id] ?? Int.max)
+            }
         }
     }
 

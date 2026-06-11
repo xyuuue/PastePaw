@@ -43,6 +43,26 @@ final class HistoryRulesTests: XCTestCase {
         XCTAssertEqual(item.tagIDs, [])
     }
 
+    func testLegacyDecodedItemsDefaultTagSortOrdersToEmpty() throws {
+        let json = """
+        {
+          "content": {
+            "text": {
+              "_0": "legacy clipping"
+            }
+          },
+          "createdAt": -978307200,
+          "id": "00000000-0000-0000-0000-000000000001",
+          "isPinned": false,
+          "tagIDs": []
+        }
+        """
+
+        let item = try JSONDecoder().decode(ClipboardHistoryItem.self, from: Data(json.utf8))
+
+        XCTAssertEqual(item.tagSortOrders, [:])
+    }
+
     func testRetentionKeepsTaggedItemsAndDropsExpiredNormalItems() {
         let now = Date()
         let tagID = UUID()
@@ -70,6 +90,67 @@ final class HistoryRulesTests: XCTestCase {
         XCTAssertTrue(HistoryRules.matchesTag(item, selectedTagID: firstTagID))
         XCTAssertTrue(HistoryRules.matchesTag(item, selectedTagID: secondTagID))
         XCTAssertFalse(HistoryRules.matchesTag(item, selectedTagID: UUID()))
+    }
+
+    func testSelectedTagOrderingUsesManualOrderBeforeDefaultFallback() {
+        let tagID = UUID()
+        let now = Date()
+        let firstManual = ClipboardHistoryItem(
+            createdAt: now.addingTimeInterval(-300),
+            tagIDs: [tagID],
+            tagSortOrders: [tagID: 0],
+            content: .text("first manual")
+        )
+        let fallback = ClipboardHistoryItem(
+            createdAt: now,
+            tagIDs: [tagID],
+            content: .text("fallback")
+        )
+        let secondManual = ClipboardHistoryItem(
+            createdAt: now.addingTimeInterval(-100),
+            tagIDs: [tagID],
+            tagSortOrders: [tagID: 1],
+            content: .text("second manual")
+        )
+
+        let result = HistoryRules.orderedItems([fallback, secondManual, firstManual], selectedTagID: tagID)
+
+        XCTAssertEqual(result.map(\.id), [firstManual.id, secondManual.id, fallback.id])
+    }
+
+    func testReorderRulesMoveItemBeforeTarget() {
+        let first = UUID()
+        let second = UUID()
+        let third = UUID()
+
+        let result = ReorderRules.reorderedIDs(
+            [first, second, third],
+            moving: third,
+            relativeTo: first,
+            placement: .before
+        )
+
+        XCTAssertEqual(result, [third, first, second])
+    }
+
+    func testReorderRulesMoveItemAfterTarget() {
+        let first = UUID()
+        let second = UUID()
+        let third = UUID()
+
+        let result = ReorderRules.reorderedIDs(
+            [first, second, third],
+            moving: first,
+            relativeTo: third,
+            placement: .after
+        )
+
+        XCTAssertEqual(result, [second, third, first])
+    }
+
+    func testReorderRulesResolvePlacementFromDropLocation() {
+        XCTAssertEqual(ReorderRules.placement(forLocationX: 24, targetWidth: 120), .before)
+        XCTAssertEqual(ReorderRules.placement(forLocationX: 96, targetWidth: 120), .after)
     }
 
     func testClipboardTagDefaultsToFirstPaletteColor() {

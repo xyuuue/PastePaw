@@ -1,6 +1,10 @@
 public enum HorizontalPressDragScrollMapper {
     public static let minimumHorizontalDragDistance = 4.0
 
+    public static func shouldStartSession(isReordering: Bool, contentIsScrollable: Bool) -> Bool {
+        !isReordering && contentIsScrollable
+    }
+
     public static func shouldActivate(
         horizontalTranslation: Double,
         verticalTranslation: Double,

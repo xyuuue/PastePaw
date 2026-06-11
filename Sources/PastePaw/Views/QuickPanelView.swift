@@ -1,15 +1,19 @@
 import AppKit
 import PastePawCore
 import SwiftUI
+import UniformTypeIdentifiers
 
 struct QuickPanelView: View {
     @EnvironmentObject private var store: ClipboardHistoryStore
     @State private var activeEditor: QuickPanelEditor?
+    @State private var isReordering = false
+    @State private var activeDragPayload: String?
     @State private var tagNameDraft = ""
     @State private var tagColorDraft = ClipboardTag.defaultColorHex
     @State private var itemTitleDraft = ""
     let onHoverChanged: (Bool) -> Void
     let onEditingChanged: (Bool) -> Void
+    let onReorderingChanged: (Bool) -> Void
     let onClose: () -> Void
 
     var body: some View {
@@ -22,8 +26,11 @@ struct QuickPanelView: View {
             }
         }
         .onHover(perform: onHoverChanged)
-        .onChange(of: activeEditor != nil) { _, isEditing in
-            onEditingChanged(isEditing)
+        .onChange(of: hasActiveInteraction) { _, hasActiveInteraction in
+            onEditingChanged(hasActiveInteraction)
+        }
+        .onChange(of: isReordering) { _, isReordering in
+            onReorderingChanged(isReordering)
         }
     }
 
@@ -40,6 +47,17 @@ struct QuickPanelView: View {
                         ForEach(store.recentQuickPanelItems) { item in
                             QuickPanelCard(
                                 item: item,
+                                isReordering: isReordering && store.selectedQuickPanelTagID != nil,
+                                activeDragPayload: $activeDragPayload,
+                                onReorderDrop: { draggedItemID, placement in
+                                    withAnimation(.spring(response: 0.24, dampingFraction: 0.86)) {
+                                        store.moveQuickPanelItem(
+                                            id: draggedItemID,
+                                            relativeTo: item.id,
+                                            placement: placement
+                                        )
+                                    }
+                                },
                                 onRenameTitle: openItemTitleEditor,
                                 onCreateAndAssignTag: openCreateTagEditor
                             )
@@ -57,6 +75,10 @@ struct QuickPanelView: View {
         .background(panelBackground(cornerRadius: 22))
     }
 
+    private var hasActiveInteraction: Bool {
+        activeEditor != nil || isReordering
+    }
+
     private var header: some View {
         HStack(spacing: 12) {
             CatMascotView(size: 42)
@@ -72,6 +94,20 @@ struct QuickPanelView: View {
             }
 
             Spacer()
+
+            Button {
+                withAnimation(.easeInOut(duration: 0.16)) {
+                    isReordering.toggle()
+                }
+            } label: {
+                Image(systemName: isReordering ? "checkmark" : "arrow.left.arrow.right")
+                    .font(.system(size: 12, weight: .bold))
+                    .frame(width: 26, height: 26)
+            }
+            .buttonStyle(.plain)
+            .foregroundStyle(isReordering ? .white : PastePawTheme.coffee)
+            .background(isReordering ? PastePawTheme.caramel : .white.opacity(0.68), in: Circle())
+            .help(store.localized(isReordering ? .done : .reorder))
 
             Text(store.quickPanelShortcut.displayText)
                 .font(.system(size: 13, weight: .bold, design: .rounded))
@@ -114,27 +150,7 @@ struct QuickPanelView: View {
                         }
 
                         ForEach(store.tags) { tag in
-                            TagFilterButton(
-                                title: tag.name,
-                                systemImage: "tag.fill",
-                                colorHex: tag.colorHex,
-                                isSelected: store.selectedQuickPanelTagID == tag.id
-                            ) {
-                                store.selectedQuickPanelTagID = tag.id
-                            }
-                            .contextMenu {
-                                Button {
-                                    editQuickPanelTag(tag)
-                                } label: {
-                                    Label(store.localized(.editTag), systemImage: "pencil")
-                                }
-
-                                Button(role: .destructive) {
-                                    store.deleteTag(tag)
-                                } label: {
-                                    Label(store.localized(.delete), systemImage: "trash")
-                                }
-                            }
+                            tagFilter(for: tag)
                         }
 
                         TagFilterButton(
@@ -155,6 +171,50 @@ struct QuickPanelView: View {
         }
         .frame(height: 36)
         .padding(.horizontal, 18)
+    }
+
+    @ViewBuilder
+    private func tagFilter(for tag: ClipboardTag) -> some View {
+        tagFilterButton(for: tag)
+            .quickPanelDragReorderTarget(
+                isEnabled: isReordering,
+                payload: QuickPanelDragPayload.tag(tag.id),
+                activePayload: $activeDragPayload,
+                acceptedPayloadID: QuickPanelDragPayload.tagID(from:),
+                onDrop: { draggedTagID, placement in
+                    withAnimation(.spring(response: 0.22, dampingFraction: 0.88)) {
+                        store.moveTag(
+                            id: draggedTagID,
+                            relativeTo: tag.id,
+                            placement: placement
+                        )
+                    }
+                }
+            )
+    }
+
+    private func tagFilterButton(for tag: ClipboardTag) -> some View {
+        TagFilterButton(
+            title: tag.name,
+            systemImage: "tag.fill",
+            colorHex: tag.colorHex,
+            isSelected: store.selectedQuickPanelTagID == tag.id
+        ) {
+            store.selectedQuickPanelTagID = tag.id
+        }
+        .contextMenu {
+            Button {
+                editQuickPanelTag(tag)
+            } label: {
+                Label(store.localized(.editTag), systemImage: "pencil")
+            }
+
+            Button(role: .destructive) {
+                store.deleteTag(tag)
+            } label: {
+                Label(store.localized(.delete), systemImage: "trash")
+            }
+        }
     }
 
     private var quickPanelSubtitleKey: LocalizedText.Key {
@@ -340,6 +400,9 @@ private struct QuickPanelCard: View {
     @State private var copiedItemID: UUID?
     @State private var copyFeedbackTask: Task<Void, Never>?
     let item: ClipboardHistoryItem
+    let isReordering: Bool
+    @Binding var activeDragPayload: String?
+    let onReorderDrop: (UUID, ReorderPlacement) -> Void
     let onRenameTitle: (ClipboardHistoryItem) -> Void
     let onCreateAndAssignTag: (ClipboardHistoryItem) -> Void
 
@@ -350,31 +413,47 @@ private struct QuickPanelCard: View {
 
                 Spacer()
 
-                Button {
-                    store.togglePin(item)
-                } label: {
-                    Image(systemName: item.isPinned ? "pin.slash.fill" : "pin")
-                        .font(.system(size: 11, weight: .bold))
+                if isReordering {
+                    Image(systemName: "line.3.horizontal")
+                        .font(.system(size: 12, weight: .bold))
+                        .foregroundStyle(.white.opacity(0.94))
                         .frame(width: 20, height: 20)
-                }
-                .buttonStyle(.plain)
-                .foregroundStyle(.white.opacity(0.94))
-                .help(item.isPinned ? store.localized(.unpin) : store.localized(.pin))
+                        .help(store.localized(.reorder))
+                } else {
+                    Button {
+                        store.togglePin(item)
+                    } label: {
+                        Image(systemName: item.isPinned ? "pin.slash.fill" : "pin")
+                            .font(.system(size: 11, weight: .bold))
+                            .frame(width: 20, height: 20)
+                    }
+                    .buttonStyle(.plain)
+                    .foregroundStyle(.white.opacity(0.94))
+                    .help(item.isPinned ? store.localized(.unpin) : store.localized(.pin))
 
-                Menu {
-                    tagMenuContent
-                } label: {
-                    Image(systemName: item.tagIDs.isEmpty ? "tag" : "tag.fill")
-                        .font(.system(size: 11, weight: .bold))
-                        .frame(width: 20, height: 20)
+                    Menu {
+                        tagMenuContent
+                    } label: {
+                        Image(systemName: item.tagIDs.isEmpty ? "tag" : "tag.fill")
+                            .font(.system(size: 11, weight: .bold))
+                            .frame(width: 20, height: 20)
+                    }
+                    .buttonStyle(.plain)
+                    .foregroundStyle(.white.opacity(0.94))
+                    .help(store.localized(.assignTags))
                 }
-                .buttonStyle(.plain)
-                .foregroundStyle(.white.opacity(0.94))
-                .help(store.localized(.assignTags))
             }
             .padding(.horizontal, 10)
             .padding(.vertical, 8)
             .background(cardAccent, in: RoundedRectangle(cornerRadius: 8))
+            .contentShape(RoundedRectangle(cornerRadius: 8))
+            .quickPanelDragReorderTarget(
+                isEnabled: isReordering,
+                payload: QuickPanelDragPayload.item(item.id),
+                activePayload: $activeDragPayload,
+                acceptedPayloadID: QuickPanelDragPayload.itemID(from:),
+                onDrop: onReorderDrop
+            )
 
             copyArea
         }
@@ -758,5 +837,176 @@ private struct TagFilterButton: View {
                 )
         }
         .buttonStyle(.plain)
+    }
+}
+
+private enum QuickPanelDragPayload {
+    private static let tagPrefix = "pastepaw.quick-panel.tag:"
+    private static let itemPrefix = "pastepaw.quick-panel.item:"
+
+    static func tag(_ id: UUID) -> String {
+        tagPrefix + id.uuidString
+    }
+
+    static func item(_ id: UUID) -> String {
+        itemPrefix + id.uuidString
+    }
+
+    static func tagID(from payload: String) -> UUID? {
+        id(from: payload, prefix: tagPrefix)
+    }
+
+    static func itemID(from payload: String) -> UUID? {
+        id(from: payload, prefix: itemPrefix)
+    }
+
+    private static func id(from payload: String, prefix: String) -> UUID? {
+        guard payload.hasPrefix(prefix) else {
+            return nil
+        }
+
+        return UUID(uuidString: String(payload.dropFirst(prefix.count)))
+    }
+}
+
+private struct QuickPanelDragReorderTarget: ViewModifier {
+    let isEnabled: Bool
+    let payload: String
+    @Binding var activePayload: String?
+    let acceptedPayloadID: (String) -> UUID?
+    let onDrop: (UUID, ReorderPlacement) -> Void
+    @State private var dropTargetSize: CGSize = .zero
+    @State private var isTargeted = false
+
+    func body(content: Content) -> some View {
+        content
+            .opacity(isTargeted ? 0.74 : 1)
+            .overlay(
+                GeometryReader { proxy in
+                    Color.clear
+                        .onAppear {
+                            dropTargetSize = proxy.size
+                        }
+                        .onChange(of: proxy.size) { _, newSize in
+                            dropTargetSize = newSize
+                        }
+                }
+                .allowsHitTesting(false)
+            )
+            .background(
+                RoundedRectangle(cornerRadius: 8)
+                    .stroke(isTargeted ? PastePawTheme.caramel.opacity(0.72) : .clear, lineWidth: 1.4)
+            )
+            .modifier(
+                QuickPanelConditionalDragDropModifier(
+                    isEnabled: isEnabled,
+                    payload: payload,
+                    activePayload: $activePayload,
+                    acceptedPayloadID: acceptedPayloadID,
+                    dropTargetSize: dropTargetSize,
+                    isTargeted: $isTargeted,
+                    onDrop: onDrop
+                )
+            )
+    }
+}
+
+private struct QuickPanelConditionalDragDropModifier: ViewModifier {
+    let isEnabled: Bool
+    let payload: String
+    @Binding var activePayload: String?
+    let acceptedPayloadID: (String) -> UUID?
+    let dropTargetSize: CGSize
+    @Binding var isTargeted: Bool
+    let onDrop: (UUID, ReorderPlacement) -> Void
+
+    func body(content: Content) -> some View {
+        if isEnabled {
+            content
+                .onDrag {
+                    activePayload = payload
+                    return NSItemProvider(object: payload as NSString)
+                }
+                .onDrop(
+                    of: [UTType.plainText.identifier],
+                    delegate: QuickPanelLiveReorderDropDelegate(
+                        activePayload: $activePayload,
+                        acceptedPayloadID: acceptedPayloadID,
+                        dropTargetSize: dropTargetSize,
+                        isTargeted: $isTargeted,
+                        onDrop: onDrop
+                    )
+                )
+        } else {
+            content
+        }
+    }
+}
+
+private struct QuickPanelLiveReorderDropDelegate: DropDelegate {
+    @Binding var activePayload: String?
+    let acceptedPayloadID: (String) -> UUID?
+    let dropTargetSize: CGSize
+    @Binding var isTargeted: Bool
+    let onDrop: (UUID, ReorderPlacement) -> Void
+
+    func validateDrop(info: DropInfo) -> Bool {
+        activePayload.flatMap(acceptedPayloadID) != nil
+    }
+
+    func dropEntered(info: DropInfo) {
+        isTargeted = true
+        reorder(for: info)
+    }
+
+    func dropUpdated(info: DropInfo) -> DropProposal? {
+        reorder(for: info)
+        return DropProposal(operation: .move)
+    }
+
+    func dropExited(info: DropInfo) {
+        isTargeted = false
+    }
+
+    func performDrop(info: DropInfo) -> Bool {
+        let canDrop = activePayload.flatMap(acceptedPayloadID) != nil
+        reorder(for: info)
+        isTargeted = false
+        activePayload = nil
+        return canDrop
+    }
+
+    private func reorder(for info: DropInfo) {
+        guard let draggedID = activePayload.flatMap(acceptedPayloadID) else {
+            return
+        }
+
+        onDrop(
+            draggedID,
+            ReorderRules.placement(
+                forLocationX: Double(info.location.x),
+                targetWidth: Double(dropTargetSize.width)
+            )
+        )
+    }
+}
+
+private extension View {
+    func quickPanelDragReorderTarget(
+        isEnabled: Bool,
+        payload: String,
+        activePayload: Binding<String?>,
+        acceptedPayloadID: @escaping (String) -> UUID?,
+        onDrop: @escaping (UUID, ReorderPlacement) -> Void
+    ) -> some View {
+        modifier(
+            QuickPanelDragReorderTarget(
+                isEnabled: isEnabled,
+                payload: payload,
+                activePayload: activePayload,
+                acceptedPayloadID: acceptedPayloadID,
+                onDrop: onDrop
+            )
+        )
     }
 }

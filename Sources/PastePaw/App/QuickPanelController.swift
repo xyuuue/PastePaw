@@ -34,6 +34,7 @@ final class QuickPanelController {
         self.panel = panel
         if let quickPanel = panel as? QuickPanelWindow {
             quickPanel.wheelScrollDirection = store.quickPanelWheelScrollDirection
+            quickPanel.isReordering = false
         }
         refreshContent()
         movePanel(animated: false)
@@ -86,6 +87,11 @@ final class QuickPanelController {
                         self?.beginInteractiveSession()
                     } else {
                         self?.endInteractiveSession()
+                    }
+                },
+                onReorderingChanged: { [weak self] isReordering in
+                    if let quickPanel = self?.panel as? QuickPanelWindow {
+                        quickPanel.isReordering = isReordering
                     }
                 },
                 onClose: { [weak self] in
@@ -172,6 +178,7 @@ final class QuickPanelController {
 @MainActor
 private final class QuickPanelWindow: NSPanel {
     var wheelScrollDirection: QuickPanelWheelScrollDirection = .defaultDirection
+    var isReordering = false
     private var pressDragScrollSession: QuickPanelPressDragScrollBridge.Session?
 
     override var canBecomeKey: Bool {
@@ -230,7 +237,10 @@ private enum QuickPanelPressDragScrollBridge {
     private static func startSession(for event: NSEvent, in window: NSWindow, session: inout Session?) {
         guard let scrollView = QuickPanelScrollViewResolver.contentHorizontalScrollView(containing: event, in: window),
               let metrics = QuickPanelScrollMetrics.metrics(for: scrollView),
-              metrics.contentWidth > metrics.viewportWidth else {
+              HorizontalPressDragScrollMapper.shouldStartSession(
+                isReordering: (window as? QuickPanelWindow)?.isReordering ?? false,
+                contentIsScrollable: metrics.contentWidth > metrics.viewportWidth
+              ) else {
             session = nil
             return
         }

@@ -11,6 +11,11 @@ struct QuickPanelPressDragScrollMappingTests {
         #expect(activates)
     }
 
+    @Test func reorderModeDoesNotStartPressDragScrolling() {
+        #expect(!HorizontalPressDragScrollMapper.shouldStartSession(isReordering: true, contentIsScrollable: true))
+        #expect(HorizontalPressDragScrollMapper.shouldStartSession(isReordering: false, contentIsScrollable: true))
+    }
+
     @Test func tinyHorizontalDragDoesNotActivateScrolling() {
         let activates = HorizontalPressDragScrollMapper.shouldActivate(
             horizontalTranslation: -2,
