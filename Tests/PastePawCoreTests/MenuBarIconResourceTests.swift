@@ -18,6 +18,15 @@ final class MenuBarIconResourceTests: XCTestCase {
         XCTAssertTrue(source.contains("image.isTemplate = true"))
     }
 
+    func testMenuBarIconUsesCompactStatusItemWithoutShrinkingIcon() throws {
+        let root = repositoryRoot()
+        let appDelegate = root.appendingPathComponent("Sources/PastePaw/App/AppDelegate.swift")
+        let source = try String(contentsOf: appDelegate, encoding: .utf8)
+
+        XCTAssertTrue(source.contains("statusItem(withLength: 18)"))
+        XCTAssertTrue(source.contains("image.size = NSSize(width: 18, height: 18)"))
+    }
+
     private func repositoryRoot(
         file: StaticString = #filePath,
         line: UInt = #line

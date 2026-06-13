@@ -33,7 +33,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     }
 
     private func installStatusItem() {
-        let item = NSStatusBar.system.statusItem(withLength: 20)
+        let item = NSStatusBar.system.statusItem(withLength: 18)
         statusItem = item
 
         if let button = item.button {
