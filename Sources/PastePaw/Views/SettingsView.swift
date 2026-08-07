@@ -54,6 +54,14 @@ struct SettingsView: View {
             }
 
             Section {
+                Toggle(isOn: $store.showsMenuBarIcon) {
+                    Text(store.localized(.showMenuBarIcon))
+                }
+
+                Text(store.localized(.showMenuBarIconHint))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+
                 Stepper(value: $store.menuHistoryCount, in: ClipboardHistoryStore.menuHistoryRange) {
                     HStack {
                         Text(store.localized(.menuBarHistoryItems))

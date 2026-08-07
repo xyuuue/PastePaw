@@ -19,8 +19,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             NSApp.applicationIconImage = icon
         }
 
-        installStatusItem()
+        syncStatusItemVisibility(store.showsMenuBarIcon)
+        observeMenuBarIconVisibility()
         installQuickPanel()
+
+        if !store.showsMenuBarIcon {
+            openPastePaw()
+        }
 
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) { [store] in
             InstallDiskImageCleanupPrompt.presentIfNeeded(store: store)
@@ -32,7 +37,29 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         return true
     }
 
-    private func installStatusItem() {
+    private func observeMenuBarIconVisibility() {
+        store.$showsMenuBarIcon
+            .removeDuplicates()
+            .dropFirst()
+            .sink { [weak self] isVisible in
+                self?.syncStatusItemVisibility(isVisible)
+            }
+            .store(in: &cancellables)
+    }
+
+    private func syncStatusItemVisibility(_ isVisible: Bool) {
+        if isVisible {
+            installStatusItemIfNeeded()
+        } else {
+            removeStatusItem()
+        }
+    }
+
+    private func installStatusItemIfNeeded() {
+        guard statusItem == nil else {
+            return
+        }
+
         let item = NSStatusBar.system.statusItem(withLength: 18)
         statusItem = item
 
@@ -45,6 +72,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         let menu = NSMenu()
         menu.delegate = self
         item.menu = menu
+    }
+
+    private func removeStatusItem() {
+        guard let item = statusItem else {
+            return
+        }
+
+        item.menu = nil
+        NSStatusBar.system.removeStatusItem(item)
+        statusItem = nil
     }
 
     private func installQuickPanel() {

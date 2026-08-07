@@ -55,6 +55,8 @@ enum LocalizedText {
         case days
         case pinnedRetentionHint
         case menuBar
+        case showMenuBarIcon
+        case showMenuBarIconHint
         case menuBarHistoryItems
         case menuBarHistoryHint
         case quickPanel
@@ -135,6 +137,8 @@ enum LocalizedText {
         .days: "days",
         .pinnedRetentionHint: "Pinned or tagged items are kept until you unpin, remove tags, or delete them.",
         .menuBar: "Menu Bar",
+        .showMenuBarIcon: "Show PastePaw in menu bar",
+        .showMenuBarIconHint: "Turn this off to hide the menu bar icon. The shortcut and quick panel keep working.",
         .menuBarHistoryItems: "Menu bar history items",
         .menuBarHistoryHint: "These items appear in the menu bar menu for one-click copy back to the clipboard.",
         .quickPanel: "Quick Panel",
@@ -215,6 +219,8 @@ enum LocalizedText {
         .days: "天",
         .pinnedRetentionHint: "置顶或带标签的内容会一直保留，直到你取消置顶、移除标签或删除。",
         .menuBar: "菜单栏",
+        .showMenuBarIcon: "在菜单栏显示 PastePaw 图标",
+        .showMenuBarIconHint: "关闭后菜单栏图标会隐藏，快捷键和快捷浮窗仍然可用。",
         .menuBarHistoryItems: "菜单栏历史数量",
         .menuBarHistoryHint: "这些记录会显示在菜单栏菜单中，点击即可复制回剪贴板。",
         .quickPanel: "快捷浮窗",

@@ -1,6 +1,6 @@
 {
   "name": "pastepaw-website",
-  "version": "1.0.12",
+  "version": "1.0.13",
   "private": true,
   "scripts": {
     "dev": "python3 -m http.server 4173",

@@ -27,6 +27,11 @@ final class ClipboardHistoryStore: ObservableObject {
             UserDefaults.standard.set(menuHistoryCount, forKey: Self.menuHistoryCountKey)
         }
     }
+    @Published var showsMenuBarIcon: Bool {
+        didSet {
+            UserDefaults.standard.set(showsMenuBarIcon, forKey: MenuBarIconVisibilityPreference.userDefaultsKey)
+        }
+    }
     @Published var quickPanelHistoryCount: Int {
         didSet {
             let boundedCount = min(max(quickPanelHistoryCount, Self.quickPanelHistoryRange.lowerBound), Self.quickPanelHistoryRange.upperBound)
@@ -91,6 +96,7 @@ final class ClipboardHistoryStore: ObservableObject {
         self.retentionDays = Self.retentionOptions.contains(savedRetentionDays) ? savedRetentionDays : 3
         let savedMenuHistoryCount = UserDefaults.standard.integer(forKey: Self.menuHistoryCountKey)
         self.menuHistoryCount = Self.menuHistoryRange.contains(savedMenuHistoryCount) ? savedMenuHistoryCount : 5
+        self.showsMenuBarIcon = MenuBarIconVisibilityPreference.value()
         let savedQuickPanelHistoryCount = UserDefaults.standard.integer(forKey: Self.quickPanelHistoryCountKey)
         self.quickPanelHistoryCount = Self.quickPanelHistoryRange.contains(savedQuickPanelHistoryCount) ? savedQuickPanelHistoryCount : 7
         self.quickPanelShortcut = Self.decodedShortcut() ?? .defaultQuickPanel
